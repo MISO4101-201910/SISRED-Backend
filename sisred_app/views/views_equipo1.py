@@ -17,7 +17,8 @@ from rest_framework.authtoken.models import Token
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
 from sisred_app.models import Recurso, RED, Perfil, Fase, HistorialFases, Version, Comentario, ComentarioMultimedia
 from sisred_app.serializer import RecursoSerializer, RecursoSerializer_post, RecursoSerializer_put, \
-    REDSerializer, ComentarioCierreSerializer, comentariosHijosSerializer, comentarioMultimediaSerializer, ComentariosPDFSerializer
+    REDSerializer, ComentarioCierreSerializer, comentariosHijosSerializer, comentarioMultimediaSerializer, \
+    ComentariosPDFSerializer, VersionSerializer
 
 
 #Autor: Francisco Perneth
@@ -291,12 +292,17 @@ def comentario_base_get(request,id):
 @api_view(['GET'])
 def comentario_pdf_get(request,id):
     comentarios = Comentario.objects.filter(version=id).order_by("id")
-    filtered = [x for x in comentarios if x.EsPadre]
-    if(comentarios==None):
-        raise NotFound(detail="Error 404, recurso not found", code=404)
-
-    serializer = ComentariosPDFSerializer(filtered, many=True)
-    return Response(serializer.data)
+    if(len(comentarios)==0):
+        vers=Version.objects.filter(id=id)
+        if (vers != None):
+            Resp = VersionSerializer(vers[0])
+            return Response(Resp.data)
+        else:
+            raise NotFound(detail="Error 404, recurso not found", code=404)
+    else:
+        filtered = [x for x in comentarios if x.EsPadre]
+        serializer = ComentariosPDFSerializer(filtered, many=True)
+        return Response(serializer.data)
 
 #Autor:         Adriana Vargas
 #Fecha:         2019-05-10
