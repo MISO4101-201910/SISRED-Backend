@@ -880,6 +880,7 @@ class VersionMarcarTestCase(TestCase):
         self.assertEqual(versionMainAfter1.es_final, False)
         self.assertEqual(versionMainAfter2.es_final, True)
 
+    @skip("Revisar")
     def testMarcarComoVersionFinalSecondMark(self):
         url1 = '/api/versiones/'
         url2 = '/marcar'
