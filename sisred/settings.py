@@ -140,4 +140,4 @@ django_heroku.settings(locals())
 
 import sys
 if 'test' in sys.argv or 'test_coverage' in sys.argv: 
-    DATABASES['test']['ENGINE'] = 'django.db.backends.sqlite3'
+    DATABASES['default']['ENGINE'] = 'django.db.backends.sqlite3'
