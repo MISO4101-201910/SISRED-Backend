@@ -136,7 +136,10 @@ USE_TZ = True
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = "/static/"
 
-django_heroku.settings(locals())
+import os
+if '/app' in os.environ['HOME']:
+    import django_heroku
+    django_heroku.settings(locals())
 
 import sys
 if 'test' in sys.argv or 'test_coverage' in sys.argv: 
