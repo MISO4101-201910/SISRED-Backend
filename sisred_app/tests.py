@@ -14,7 +14,7 @@ import json
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from rest_framework.test import APIClient
-from rest_framework.reverse import reverse
+
 
 
 # Create your tests here.
@@ -1334,9 +1334,9 @@ class DescargarRED(TestCase):
         url = '/api/reds/' + str(self.red.pk) + '/proyectored/'
         response = self.client.get(url, format='json')
         data = json.loads(response.content)['context']
-        self.assertEqual(data[0]['nombre'], 'illustrator')
-        self.assertEqual(data[1]['nombre'], 'illustrator2')
+        self.assertEqual(data[1]['nombre'], 'illustrator')
+        self.assertEqual(data[0]['nombre'], 'illustrator2')
         self.assertEqual(data[0]['tipo'], 'png')
         self.assertEqual(data[1]['tipo'], 'png')
-        self.assertEqual(data[0]['carpeta'], '/blah')
-        self.assertEqual(data[1]['carpeta'], '/bleh')
+        self.assertEqual(data[1]['carpeta'], '/blah')
+        self.assertEqual(data[0]['carpeta'], '/bleh')
