@@ -9,7 +9,7 @@ import json
 import datetime
 import requests
 from datetime import datetime
-from rest_framework.authtoken.models import Token
+#from rest_framework.authtoken.models import Token
 
 from sisred_app.models import Recurso, RED, Perfil, Version, Comentario, ComentarioMultimedia
 from sisred_app.serializer import RecursoSerializer, RecursoSerializer_post, RecursoSerializer_put, \
@@ -51,10 +51,10 @@ def recurso_post(request):
 #   Permite consultar un recurso mediante su identificador (id)
 @api_view(['GET'])
 def recurso_get(request,id):
-    recurso = Recurso.objects.filter(id=id).first()
-    if(recurso==None):
+    rec = Recurso.objects.filter(id=id).first()
+    if(rec==None):
         raise NotFound(detail="Error 404, recurso not found", code=404)
-    serializer = RecursoSerializer(recurso)
+    serializer = RecursoSerializer(rec)
     return Response(serializer.data)
 
 #Autor: Francisco Perneth
