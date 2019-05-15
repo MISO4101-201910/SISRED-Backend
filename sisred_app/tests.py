@@ -835,7 +835,7 @@ class VersionMarcarTestCase(TestCase):
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, 404)
 
-    @unittest.skip("Revisar")
+    @skip("Revisar")
     def testMarcarComoVersionFinalJustOne(self):
         url1 = '/api/versiones/'
         url2 = '/marcar'
@@ -854,7 +854,7 @@ class VersionMarcarTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(versionMainAfter.es_final, True)
 
-    @unittest.skip("Revisar")
+    @skip("Revisar")
     def testMarcarComoVersionFinalFirstMark(self):
         url1 = '/api/versiones/'
         url2 = '/marcar'
@@ -876,7 +876,7 @@ class VersionMarcarTestCase(TestCase):
         self.assertEqual(versionMainAfter1.es_final, False)
         self.assertEqual(versionMainAfter2.es_final, True)
 
-    @unittest.skip("Revisar")
+    @skip("Revisar")
     def testMarcarComoVersionFinalSecondMark(self):
         url1 = '/api/versiones/'
         url2 = '/marcar'
@@ -924,7 +924,7 @@ class sisRedTestCase(TestCase):
         self.assertEqual(numero_identificacion,
                          current_data['numeroIdentificacion'])
 
-    @unittest.skip("Revisar")
+    @skip("Revisar")
     def test_cambiar_fase(self):
         # print("test_cambiar_fase")
         proyecto_conectate = ProyectoConectate.objects.create(id_conectate='2', nombre='namepy',
@@ -1175,7 +1175,7 @@ class sisRedTestCase(TestCase):
 
 class RR02TestCase(TestCase):
 
-    @unittest.skip("Revisar")
+    @skip("Revisar")
     def test_get_version(self):
         url = '/api/get_version/'
         fecha_inicio = datetime.datetime.strptime("2018-03-11", "%Y-%m-%d").date()
@@ -1191,7 +1191,7 @@ class RR02TestCase(TestCase):
         self.assertEqual(current_data[0]['fields']['nombre'], 'pruebaRED')
         self.assertEqual(current_data[1]['fields']['numero'], 1)
 
-    @unittest.skip("Revisar")
+    @skip("Revisar")
     def test_get_recursos(self):
         url = '/api/get_recursos_by_version/'
         fecha_inicio = datetime.datetime.strptime("2018-03-11", "%Y-%m-%d").date()
