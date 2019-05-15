@@ -140,3 +140,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = "/static/"
 
 django_heroku.settings(locals())
+
+import sys
+if 'test' in sys.argv or 'test_coverage' in sys.argv: 
+    DATABASES['default']['ENGINE'] = 'django.db.backends.sqlite3'
