@@ -69,8 +69,8 @@ def recurso_get(pk):
 def recurso_put(request):
     serializer = RecursoSerializer_put(data=request.data)
     if serializer.is_valid():
-        id=int(request.data.get("id"))
-        ItemRecurso = Recurso.objects.filter(id=id).first()
+        pk=int(request.data.get("id"))
+        ItemRecurso = Recurso.objects.filter(id=pk).first()
         if (ItemRecurso==None):
             raise NotFound(detail="Error 404, recurso not found", code=404)
         ItemRecurso.nombre=request.data.get("nombre")
@@ -275,7 +275,8 @@ def comentario_base_get(request,pk):
         raise NotFound(detail="Error 404, Comment not found", code=404)
     serializer = ComentarioCierreSerializer(comentario_base)
     return Response(serializer.data)
-  
+
+
 #Autor: Francisco Perneth
 #Fecha: 2019-05-09
 #Parametros:
