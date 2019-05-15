@@ -87,10 +87,10 @@ WSGI_APPLICATION = 'sisred.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.environ["BD_SISRED"],
-        'USER': os.environ["BD_SISRED_USUARIO"],
-        'PASSWORD': os.environ["BD_SISRED_PASSWORD"],
-        'HOST': os.environ["BD_SISRED_HOST"],
+        'NAME': os.environ["BD_SISRED_R_E3"],
+        'USER': os.environ["BD_SISRED_USUARIO_R_E3"],
+        'PASSWORD': os.environ["BD_SISRED_PASSWORD_R_E3"],
+        'HOST': os.environ["BD_SISRED_HOST_R_E3"],
         'PORT': os.environ["BD_SISRED_PORT"]
     }
 }
