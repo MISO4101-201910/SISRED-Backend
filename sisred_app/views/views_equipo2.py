@@ -315,7 +315,7 @@ class ProyectoREDSerializer(serializers.ModelSerializer):
         fields= '__all__'
 
 
-#Obtiene la lista de Proyectos RED asociados al RED. Con autenticación de usuario
+#Obtiene la lista de Proyectos RED asociados al RED
 @csrf_exempt
 @api_view(["GET"])
 @permission_classes((AllowAny,))
