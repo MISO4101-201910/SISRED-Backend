@@ -50,11 +50,11 @@ def recurso_post(request):
 #Descripcion:
 #   Permite consultar un recurso mediante su identificador (id)
 @api_view(['GET'])
-def recurso_get(request,id):
-    rec = Recurso.objects.filter(id=id).first()
-    if(rec==None):
+def recurso_get(pk):
+    recurso = Recurso.objects.filter(id=pk).first()
+    if(recurso==None):
         raise NotFound(detail="Error 404, recurso not found", code=404)
-    serializer = RecursoSerializer(rec)
+    serializer = RecursoSerializer(recurso)
     return Response(serializer.data)
 
 #Autor: Francisco Perneth
@@ -90,9 +90,9 @@ def recurso_put(request):
 #Descripcion:
 #   Permite consultar  la información de un RED, especialmente información del avance
 @api_view(['GET'])
-def fase_byid(request,id):
+def fase_byid(request,pk):
     if request.method == 'GET':
-        red = RED.objects.filter(id=id)
+        red = RED.objects.filter(id=pk)
         if (red == None):
             raise NotFound(detail="Error 404, recurso not found", code=404)
         print(red)
@@ -137,7 +137,6 @@ def usuarioPerfilJson(perfil, usuario):
                            "estado": perfil.estado, "estado_sisred": perfil.estado_sisred})
 
     return usuario_perfil
-
 
 #Autor:         Ramiro Vargas
 #Fecha:         2019-04-22
@@ -247,11 +246,11 @@ def comentario_cierre_post(request):
 #Descripcion:   Funcionalidad para actualizar los estados del comentario base una vez ha sido cerrado
 
 @api_view(['PUT'])
-def comentario_cierre_put(request, id):
+def comentario_cierre_put(request, pk):
         if request.method == 'PUT':
 
                 comentario = json.loads(request.body)
-                comentario_base = Comentario.objects.filter(comentario_multimedia=id).earliest('fecha_creacion')
+                comentario_base = Comentario.objects.filter(comentario_multimedia=pk).earliest('fecha_creacion')
 
                 comentario_base.cerrado = comentario['cerrado']
                 comentario_base.resuelto = comentario['resuelto']
@@ -268,9 +267,9 @@ def comentario_cierre_put(request, id):
 # Descripcion:   Funcionalidad para obtener el comentario base a partir de un comentario del hilo
 
 @api_view(['GET'])
-def comentario_base_get(request,id):
+def comentario_base_get(request,pk):
 
-    comentario_base = Comentario.objects.filter(comentario_multimedia=id).earliest('fecha_creacion')
+    comentario_base = Comentario.objects.filter(comentario_multimedia=pk).earliest('fecha_creacion')
 
     if(comentario_base==None):
         raise NotFound(detail="Error 404, Comment not found", code=404)
@@ -286,10 +285,10 @@ def comentario_base_get(request,id):
 #   Permite consultar una version del RED mediante su identificador (id)
 
 @api_view(['GET'])
-def comentario_pdf_get(request,id):
-    comentarios = Comentario.objects.filter(version=id).order_by("id")
+def comentario_pdf_get(request,pk):
+    comentarios = Comentario.objects.filter(version=pk).order_by("id")
     if(len(comentarios)==0):
-        vers=Version.objects.filter(id=id)
+        vers=Version.objects.filter(id=pk)
         if (vers != None):
             Resp = VersionSerializer(vers[0])
             return Response(Resp.data)
