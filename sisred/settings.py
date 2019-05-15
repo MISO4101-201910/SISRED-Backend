@@ -83,17 +83,7 @@ WSGI_APPLICATION = 'sisred.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'sotrhspg',
-        'USER': 'sotrhspg',
-        'PASSWORD': 'ZCXP5hsMhf_PEHlWZkhi6VEzovX4oHCc',
-        'HOST': 'isilo.db.elephantsql.com',
-        'PORT': '5432'
-    }
-}
-'''
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -104,7 +94,7 @@ DATABASES = {
         'PORT': os.environ["BD_SISRED_PORT"]
     }
 }
-'''
+
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
 
