@@ -150,6 +150,7 @@ def get_comentarios_video(request, id):
         try:
             recurso = Recurso.objects.get(pk=id)
             comentarios = Comentario.objects.filter(recurso=recurso)
+            cont = 0
             for comentario in comentarios:
                 if comentario.comentario_multimedia not in multimedias:
                     multimedias.append(comentario.comentario_multimedia)
@@ -178,9 +179,13 @@ def get_comentarios_video(request, id):
                 output_dict = [x for x in comentEsp if x['cerrado']]
                 if len(output_dict) > 0:
                     comentEsp[0]['cerrado'] = True
+                    cont = cont + len(output_dict)
+                respuesta.append({"id": multimedia.pk, "range": rangeEsp, "shape": shape, "comments": comentEsp,
+                                  "abiertos":0, "cerrados":0})
 
-                respuesta.append({"id": multimedia.pk, "range": rangeEsp, "shape": shape, "comments": comentEsp})
                 print(respuesta)
+            respuesta[0]['abiertos'] = len(respuesta) - cont
+            respuesta[0]['cerrados'] = cont
             return HttpResponse(json.dumps(respuesta, default=decimal_default), content_type="application/json")
         except Exception as ex:
             print(ex)
