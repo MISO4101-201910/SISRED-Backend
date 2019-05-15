@@ -93,11 +93,7 @@ DATABASES = {
         'HOST': os.environ["BD_SISRED_HOST_D_E2"],
         'PORT': os.environ["BD_SISRED_PORT"],
         'TEST': {
-            'NAME': os.environ["BD_SISRED_T_E2"],
-            'USER': os.environ["BD_SISRED_USUARIO_T_E2"],
-            'PASSWORD': os.environ["BD_SISRED_PASSWORD_T_E2"],
-            'HOST': os.environ["BD_SISRED_HOST_T_E2"],
-            'PORT': os.environ["BD_SISRED_PORT"],
+            'ENGINE': 'django.db.backends.sqlite3'
         },
     }    
 }
