@@ -10,6 +10,10 @@ from .models import User, Perfil, RED, Fase, ProyectoConectate, Recurso, Notific
     Notificacion
 from django.contrib.auth.models import User
 import json
+from rest_framework.authtoken.models import Token
+from django.contrib.auth import authenticate
+from rest_framework.test import APIClient
+from rest_framework.reverse import reverse
 
 
 # Create your tests here.
@@ -1247,7 +1251,19 @@ class DescargarRED(TestCase):
     def test_respuesta_listar_proyectos(self):
         user = User.objects.create_user(username='test2', password='123456', email='test@test.com', first_name='test',
                                         last_name='T')
+        user.set_password('123456')
+        user.save()
+
         perfil = Perfil.objects.create(id_conectate=123, usuario=user, estado=1)
+        user2=authenticate(username=perfil.usuario.username, password='123456')
+
+        Token.objects.create(user=user2)
+        token = Token.objects.get(user=user2)
+        token.save()
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+        self.client.user = user2
+
         proyecto = ProyectoConectate.objects.create(id_conectate='1', nombre='MISO', codigo='1234',
                                                     fecha_inicio='2019-03-20', fecha_fin='2019-04-10')
 
@@ -1264,7 +1280,19 @@ class DescargarRED(TestCase):
     def test_contar_versiones(self):
         user = User.objects.create_user(username='test2', password='123456', email='test@test.com', first_name='test',
                                         last_name='T')
+        user.set_password('123456')
+        user.save()
+
         perfil = Perfil.objects.create(id_conectate=123, usuario=user, estado=1)
+        user2=authenticate(username=perfil.usuario.username, password='123456')
+
+        Token.objects.create(user=user2)
+        token = Token.objects.get(user=user2)
+        token.save()
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+        self.client.user = user2
+
         proyecto = ProyectoConectate.objects.create(id_conectate='1', nombre='MISO', codigo='1234',
                                                     fecha_inicio='2019-03-20', fecha_fin='2019-04-10')
 
@@ -1277,13 +1305,25 @@ class DescargarRED(TestCase):
         url = '/api/reds/' + str(self.red.pk) + '/proyectored/'
         response = self.client.get(url, format='json')
         data = json.loads(response.content)['context']
-        print(data)
+        print(json.loads(response.content))
         self.assertEqual(len(data), 2)
 
     def test_listar_proyecto_red(self):
         user = User.objects.create_user(username='test2', password='123456', email='test@test.com', first_name='test',
                                         last_name='T')
+        user.set_password('123456')
+        user.save()
+
         perfil = Perfil.objects.create(id_conectate=123, usuario=user, estado=1)
+        user2=authenticate(username=perfil.usuario.username, password='123456')
+
+        Token.objects.create(user=user2)
+        token = Token.objects.get(user=user2)
+        token.save()
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+        self.client.user = user2
+
         proyecto = ProyectoConectate.objects.create(id_conectate='1', nombre='MISO', codigo='1234',
                                                     fecha_inicio='2019-03-20', fecha_fin='2019-04-10')
 

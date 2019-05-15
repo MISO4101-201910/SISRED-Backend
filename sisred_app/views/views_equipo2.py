@@ -320,7 +320,7 @@ class ProyectoREDSerializer(serializers.ModelSerializer):
 @api_view(["GET"])
 @permission_classes((AllowAny,))
 def getListaProyectosred(request, id):
-    """
+
     token = request.META['HTTP_AUTHORIZATION']
     token = token.replace('Token ', '')
     try:
@@ -330,7 +330,7 @@ def getListaProyectosred(request, id):
     if not TokenStatus:
         return HttpResponseForbidden('Invalid Token')
 
-    """
+
     try:
         red = RED.objects.get(pk=id)
     except:
