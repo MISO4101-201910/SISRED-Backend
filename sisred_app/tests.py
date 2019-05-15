@@ -9,6 +9,7 @@ from sisred_app.views.views_equipo4 import createNotification
 from .models import User, Perfil, RED, Fase, ProyectoConectate, Recurso, NotificacionTipo, Rol, RolAsignado, \
     Notificacion
 from django.contrib.auth.models import User
+from unittest import skip
 import json
 
 
