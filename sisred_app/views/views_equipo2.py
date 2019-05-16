@@ -48,13 +48,16 @@ def marcarVersion(request,id):
     return HttpResponseNotFound()     
     
 def buscarRed(request):
+
     token = request.META['HTTP_AUTHORIZATION']
     token = token.replace('Token ', '')
 
+    #verificar si el usuario esta logueado
     tokenStatus = getTokenStatus(request)
     if(not tokenStatus):
         return HttpResponseForbidden('Invalid Token')
 
+    #traer el perfil del usuario que esta logueado
     userId = Token.objects.get(key=token).user.id
 
     if request.method == 'GET':
@@ -68,6 +71,7 @@ def buscarRed(request):
 
         redsAsignados = RED.objects.filter(rolasignado__in=roles_asignado).values() 
         
+        #crear una querry vacia
         q = RED.objects.filter() 
 
         if text:
@@ -81,6 +85,7 @@ def buscarRed(request):
 
         listOfReds = list(q.values())
 
+        #asignar si esta asignado el red al usuario o no
         for red in listOfReds:
             if(any(redOfList['id'] == red['id'] for redOfList in redsAsignados)):
                 red['asignado']=True
@@ -396,7 +401,8 @@ def verAvanceProyectoConectate(request,idProyecto):
             'normalReds': list(normalReds),
             'cerradosReds':list(cerradosReds),
         }, safe=True)
-
+        
+#trae todos los asignados de un red
 def getAllAsignados(request,redId):
     tokenStatus = getTokenStatus(request)
     if(not tokenStatus):
@@ -422,6 +428,7 @@ def getTokenStatus(request):
     
     return tokenStatus
 
+#verifica si el red esta activo
 def esActivo(red):
     if not red.fecha_creacion:
         return False
