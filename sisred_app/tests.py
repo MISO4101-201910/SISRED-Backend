@@ -1340,8 +1340,20 @@ class DescargarRED(TestCase):
         self.assertEqual(data[1]['tipo'], 'png')
         self.assertEqual(data[1]['carpeta'], '/blah')
         self.assertEqual(data[0]['carpeta'], '/bleh')
-        
-def testVerAvanceProyectoConectate(self):
+
+class VerAvance(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='test', password='sihdfnssejkhfse', email='test@test.com', first_name="fname",last_name="lname")
+        self.perfil = Perfil.objects.create(id_conectate='1', usuario=self.user, estado=1)
+        self.rol = Rol.objects.create(id_conectate='1', nombre='rolPrueba')
+        Token.objects.create(user=self.user)
+        token = Token.objects.get(user=self.user)
+        token.save()
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+
+    def testVerAvanceProyectoConectate(self):
         fecha_inicio = datetime.datetime.strptime("2018-03-11", "%Y-%m-%d").date()
         fecha_fin = datetime.datetime.strptime("2018-03-12", "%Y-%m-%d").date()
 
@@ -1386,7 +1398,6 @@ def testVerAvanceProyectoConectate(self):
         #reds = json.loads(response.content)
         self.assertEqual(response.status_code, 200)
 
-    """
     def testGetAsignados(self):
         redId = '1'
         idProyectoConectate = '1'
@@ -1394,11 +1405,11 @@ def testVerAvanceProyectoConectate(self):
         fecha_fin = datetime.datetime.strptime("2018-03-12", "%Y-%m-%d").date()
         
         proyectto_conectate = ProyectoConectate.objects.create(id_conectate=idProyectoConectate, nombre='prueba',
-                                                               codigo='prueba', fecha_inicio=fecha_inicio,
-                                                               fecha_fin=fecha_fin)
+                                                                codigo='prueba', fecha_inicio=fecha_inicio,
+                                                                fecha_fin=fecha_fin)
 
         red = RED.objects.create(id_conectate="1", nombre='pruebaREDAlerta', descripcion='prueba',
-                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyectto_conectate)
+                                    tipo='prueba', solicitante='prueba', proyecto_conectate=proyectto_conectate)
         
         RolAsignado.objects.create(id_conectate="2", red=red, usuario=self.perfil,estado=1,rol=self.rol)
 
@@ -1412,4 +1423,3 @@ def testVerAvanceProyectoConectate(self):
         current_data = json.loads(response.content)
 
         self.assertEqual(current_data[0], "fname lname")
-        """
