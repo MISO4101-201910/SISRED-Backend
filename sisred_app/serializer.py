@@ -90,13 +90,21 @@ class ProyectosSerializer(serializers.ModelSerializer):
 
     def get_red_alert(self, obj):
         d = datetime.today() - timedelta(days=7)
-        return Comentario.objects.filter(version__red__proyecto_conectate=obj.id)\
-            .filter(~Q(version__red__fase__nombre_fase='Cerrado')).filter(fecha_creacion__lte=d).count()
+        a = RED.objects.filter(proyecto_conectate=obj.id).filter(fecha_creacion__lte=d)\
+            .filter(~Q(fase__nombre_fase='Cerrado')).filter(version__numero__isnull=True).count()
+        b = Comentario.objects.filter(version__red__proyecto_conectate=obj.id).filter(fecha_creacion__lte=d)\
+            .filter(~Q(version__red__fase__nombre_fase='Cerrado')).count()
+        alert = a + b
+        return alert
 
     def get_red_active(self, obj):
         d = datetime.today() - timedelta(days=7)
-        return Comentario.objects.filter(version__red__proyecto_conectate=obj.id)\
-            .filter(~Q(version__red__fase__nombre_fase='Cerrado')).filter(fecha_creacion__gte=d).count()
+        a = Comentario.objects.filter(version__red__proyecto_conectate=obj.id).filter(fecha_creacion__gte=d)\
+            .filter(~Q(version__red__fase__nombre_fase='Cerrado')).count()
+        b = RED.objects.filter(proyecto_conectate=obj.id).filter(fecha_creacion__gte=d)\
+            .filter(~Q(fase__nombre_fase='Cerrado')).filter(version__numero__isnull=True).count()
+        active = a + b
+        return active
 
     def get_red_close(self, obj):
         return RED.objects.filter(proyecto_conectate=obj.id).filter(fase__nombre_fase='Cerrado').count()
