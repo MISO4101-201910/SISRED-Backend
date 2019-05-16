@@ -1243,6 +1243,81 @@ class SisredTestCase(TestCase):
         response = self.client.put('/api/habilitar-red/' + str(red.id_conectate))
         current_data = json.loads(response.content)
         self.assertEqual(current_data[0]['listo'], True)
+<<<<<<< HEAD
+    
+    def testVerAvanceProyectoConectate(self):
+        fecha_inicio = datetime.datetime.strptime("2018-03-11", "%Y-%m-%d").date()
+        fecha_fin = datetime.datetime.strptime("2018-03-12", "%Y-%m-%d").date()
+
+        idProyectoConectate = '1'
+
+        proyectto_conectate = ProyectoConectate.objects.create(id_conectate=idProyectoConectate, nombre='prueba',
+                                                               codigo='prueba', fecha_inicio=fecha_inicio,
+                                                               fecha_fin=fecha_fin)
+        red = RED.objects.create(id_conectate="1", nombre='pruebaREDAlerta', descripcion='prueba',
+                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyectto_conectate)
+        version = Version.objects.create(numero=1, imagen='prueba', red=red, id=1)
+
+        fase1 = Fase.objects.create(id_conectate=idProyectoConectate,nombre_fase="fase 1")
+        fase2 = Fase.objects.create(id_conectate=idProyectoConectate,nombre_fase="fase 2")
+
+        HistorialFases.objects.create(fecha_cambio=fecha_inicio,fase=fase1,red=red)
+        HistorialFases.objects.create(fecha_cambio=fecha_fin,fase=fase2,red=red)
+
+        red2 = RED.objects.create(id_conectate="2", nombre='pruebaREDActivo', descripcion='prueba',
+                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyectto_conectate)
+
+        version2 = Version.objects.create(numero=1, imagen='prueba', red=red2, id=2)
+
+        HistorialFases.objects.create(fecha_cambio=fecha_inicio,fase=fase1,red=red2)
+        HistorialFases.objects.create(fecha_cambio=fecha_fin,fase=fase2,red=red2)
+
+        Comentario.objects.create(
+            contenido = "comentario",
+            version = version2,
+            usuario = self.perfil,
+            fecha_creacion = datetime.datetime.now()
+        )
+
+
+        
+        url = f"/api/proyectoConectate/"+idProyectoConectate+"/verAvance"
+        
+        response = self.client.get(url)
+
+        current_data = json.loads(response.content)
+
+        #reds = json.loads(response.content)
+        self.assertEqual(response.status_code, 200)
+
+    """
+    def testGetAsignados(self):
+        redId = '1'
+        idProyectoConectate = '1'
+        fecha_inicio = datetime.datetime.strptime("2018-03-11", "%Y-%m-%d").date()
+        fecha_fin = datetime.datetime.strptime("2018-03-12", "%Y-%m-%d").date()
+        
+        proyectto_conectate = ProyectoConectate.objects.create(id_conectate=idProyectoConectate, nombre='prueba',
+                                                               codigo='prueba', fecha_inicio=fecha_inicio,
+                                                               fecha_fin=fecha_fin)
+
+        red = RED.objects.create(id_conectate="1", nombre='pruebaREDAlerta', descripcion='prueba',
+                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyectto_conectate)
+        
+        RolAsignado.objects.create(id_conectate="2", red=red, usuario=self.perfil,estado=1,rol=self.rol)
+
+
+        url = f"/api/red/{redId}/historicoAsignados"
+        
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+
+        current_data = json.loads(response.content)
+
+        self.assertEqual(current_data[0], "fname lname")
+        """
+=======
 
 class DescargarRED(TestCase):
     red=None
@@ -1340,76 +1415,4 @@ class DescargarRED(TestCase):
         self.assertEqual(data[1]['tipo'], 'png')
         self.assertEqual(data[1]['carpeta'], '/blah')
         self.assertEqual(data[0]['carpeta'], '/bleh')
-        
-def testVerAvanceProyectoConectate(self):
-        fecha_inicio = datetime.datetime.strptime("2018-03-11", "%Y-%m-%d").date()
-        fecha_fin = datetime.datetime.strptime("2018-03-12", "%Y-%m-%d").date()
-
-        idProyectoConectate = '1'
-
-        proyectto_conectate = ProyectoConectate.objects.create(id_conectate=idProyectoConectate, nombre='prueba',
-                                                               codigo='prueba', fecha_inicio=fecha_inicio,
-                                                               fecha_fin=fecha_fin)
-        red = RED.objects.create(id_conectate="1", nombre='pruebaREDAlerta', descripcion='prueba',
-                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyectto_conectate)
-        version = Version.objects.create(numero=1, imagen='prueba', red=red, id=1)
-
-        fase1 = Fase.objects.create(id_conectate=idProyectoConectate,nombre_fase="fase 1")
-        fase2 = Fase.objects.create(id_conectate=idProyectoConectate,nombre_fase="fase 2")
-
-        HistorialFases.objects.create(fecha_cambio=fecha_inicio,fase=fase1,red=red)
-        HistorialFases.objects.create(fecha_cambio=fecha_fin,fase=fase2,red=red)
-
-        red2 = RED.objects.create(id_conectate="2", nombre='pruebaREDActivo', descripcion='prueba',
-                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyectto_conectate)
-
-        version2 = Version.objects.create(numero=1, imagen='prueba', red=red2, id=2)
-
-        HistorialFases.objects.create(fecha_cambio=fecha_inicio,fase=fase1,red=red2)
-        HistorialFases.objects.create(fecha_cambio=fecha_fin,fase=fase2,red=red2)
-
-        Comentario.objects.create(
-            contenido = "comentario",
-            version = version2,
-            usuario = self.perfil,
-            fecha_creacion = datetime.datetime.now()
-        )
-
-
-        
-        url = f"/api/proyectoConectate/"+idProyectoConectate+"/verAvance"
-        
-        response = self.client.get(url)
-
-        current_data = json.loads(response.content)
-
-        #reds = json.loads(response.content)
-        self.assertEqual(response.status_code, 200)
-
-    """
-    def testGetAsignados(self):
-        redId = '1'
-        idProyectoConectate = '1'
-        fecha_inicio = datetime.datetime.strptime("2018-03-11", "%Y-%m-%d").date()
-        fecha_fin = datetime.datetime.strptime("2018-03-12", "%Y-%m-%d").date()
-        
-        proyectto_conectate = ProyectoConectate.objects.create(id_conectate=idProyectoConectate, nombre='prueba',
-                                                               codigo='prueba', fecha_inicio=fecha_inicio,
-                                                               fecha_fin=fecha_fin)
-
-        red = RED.objects.create(id_conectate="1", nombre='pruebaREDAlerta', descripcion='prueba',
-                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyectto_conectate)
-        
-        RolAsignado.objects.create(id_conectate="2", red=red, usuario=self.perfil,estado=1,rol=self.rol)
-
-
-        url = f"/api/red/{redId}/historicoAsignados"
-        
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 200)
-
-        current_data = json.loads(response.content)
-
-        self.assertEqual(current_data[0], "fname lname")
-        """
+>>>>>>> Equipo2Sprint3Develop

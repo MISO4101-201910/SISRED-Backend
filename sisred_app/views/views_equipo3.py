@@ -6,6 +6,7 @@ from sisred_app.models import RED, ProyectoRED, RolAsignado, Perfil, Metadata, R
 from django.http import HttpResponse
 from django.core import serializers
 from django.contrib.auth.models import User
+
 from datetime import datetime, timedelta
 
 from django.utils.formats import get_format
@@ -46,6 +47,7 @@ def get_detallered_personas(request):
 # Metodo para obtener detalle de proyectos RED
 @csrf_exempt
 def get_detallered_proyectosred(request):
+
     if request.method == 'GET':
         red = RED.objects.get(id=request.GET['RED'])
         proyectos = ProyectoRED.objects.filter(red=red)
@@ -53,6 +55,7 @@ def get_detallered_proyectosred(request):
         for pro in proyectos:
             respuesta.append({"id": pro.pk, "name": pro.nombre, "autor": pro.autor, "typeFile": pro.tipo, "createdDate": red.fecha_creacion.strftime('%Y/%m/%d'),"description":pro.descripcion})
         return HttpResponse(json.dumps(respuesta), content_type="application/json")
+
 
 # Metodo para obtener detalle de los metadatas del RED
 @csrf_exempt

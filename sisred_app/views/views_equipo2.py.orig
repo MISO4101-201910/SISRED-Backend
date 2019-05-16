@@ -308,6 +308,7 @@ def getListaComentarios(request,id_v, id_r):
     serializer=ComentarioSerializer(data, many=True)
     return JsonResponse({'context': serializer.data}, safe=True)
 
+<<<<<<< HEAD
 @csrf_exempt
 def verAvanceProyectoConectate(request,idProyecto):
     tokenStatus = getTokenStatus(request)
@@ -418,7 +419,8 @@ def esActivo(red):
             return True
     
     return False
-    
+=======
+
 class ProyectoREDSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProyectoRED
@@ -448,4 +450,4 @@ def getListaProyectosred(request, id):
     data = ProyectoRED.objects.filter(red=red)
     serializer = ProyectoREDSerializer(data, many=True)
     return JsonResponse({'context': serializer.data}, safe=True)
-
+>>>>>>> Equipo2Sprint3Develop
