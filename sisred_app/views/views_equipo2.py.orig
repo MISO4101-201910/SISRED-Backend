@@ -9,8 +9,11 @@ from sisred_app.models import ProyectoRED, Recurso, RED, RolAsignado, Perfil, Ro
 from django.contrib.auth.models import User
 from sisred_app.serializer import RecursoSerializer
 from rest_framework.authtoken.models import Token
+<<<<<<< HEAD
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import api_view, permission_classes
+=======
+>>>>>>> Equipo2Sprint3Develop
 import datetime
 import json
 from rest_framework.authtoken.models import Token
@@ -328,6 +331,8 @@ def getListaComentarios(request,id_v, id_r):
     serializer=ComentarioSerializer(data, many=True)
     return JsonResponse({'context': serializer.data}, safe=True)
 
+<<<<<<< HEAD
+=======
 @csrf_exempt
 def verAvanceProyectoConectate(request,idProyecto):
     tokenStatus = getTokenStatus(request)
@@ -411,6 +416,7 @@ def getAllAsignados(request,redId):
 
 
 
+>>>>>>> Equipo2Sprint3Develop
 def getTokenStatus(request):
     token = request.META['HTTP_AUTHORIZATION']
     token = token.replace('Token ', '')
@@ -419,6 +425,9 @@ def getTokenStatus(request):
     except Token.DoesNotExist:
         tokenStatus = False
     
+<<<<<<< HEAD
+    return tokenStatus
+=======
     return tokenStatus
 
 def esActivo(red):
@@ -469,12 +478,4 @@ def getListaProyectosred(request, id):
     serializer = ProyectoREDSerializer(data, many=True)
     return JsonResponse({'context': serializer.data}, safe=True)
 
-def getTokenStatus(request):
-    token = request.META['HTTP_AUTHORIZATION']
-    token = token.replace('Token ', '')
-    try:
-        tokenStatus = Token.objects.get(key=token).user.is_active
-    except Token.DoesNotExist:
-        tokenStatus = False
-    
-    return tokenStatus
+>>>>>>> Equipo2Sprint3Develop
