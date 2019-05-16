@@ -49,12 +49,13 @@ def marcarVersion(request,id):
     
 def buscarRed(request):
     token = request.META['HTTP_AUTHORIZATION']
+    token = token.replace('Token ', '')
+
     tokenStatus = getTokenStatus(request)
     if(not tokenStatus):
         return HttpResponseForbidden('Invalid Token')
 
     userId = Token.objects.get(key=token).user.id
-    #userId =  User.objects.get(username='test').id
 
     if request.method == 'GET':
         fstart = request.GET.get("fstart")

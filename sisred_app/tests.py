@@ -24,10 +24,11 @@ class sisred_appTestCase(TestCase):
         self.user = User.objects.create_user(username='test', password='sihdfnssejkhfse', email='test@test.com', first_name="fname",last_name="lname")
         self.perfil = Perfil.objects.create(id_conectate='1', usuario=self.user, estado=1)
         self.rol = Rol.objects.create(id_conectate='1', nombre='rolPrueba')
-    
-        #token = Token.objects.create(key='23784jsdfk',user_id=user.id)     
-        
-        #self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+        Token.objects.create(user=self.user)
+        token = Token.objects.get(user=self.user)
+        token.save()
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
     
     def testMarcarComoVersionFinalJustOne(self):
         url1 = '/api/versiones/'
@@ -89,7 +90,6 @@ class sisred_appTestCase(TestCase):
         self.assertEqual(versionMainAfter1.es_final, False)
         self.assertEqual(versionMainAfter2.es_final, True)
     
-    """
     def testBuscarRedNameAllParameters(self):
         fecha = datetime.datetime.now()
         proyecto = ProyectoConectate.objects.create(id=3, fecha_inicio=fecha, fecha_fin=fecha)
@@ -372,7 +372,6 @@ class sisred_appTestCase(TestCase):
         self.assertEqual(len(reds), 2)
         self.assertEqual(reds[0]['id'], 1)
         self.assertEqual(reds[1]['id'], 3)
-    """
 
 class CrearVersion(TestCase):
     def testCrearVersionHappyPath(self):
