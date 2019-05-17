@@ -15,6 +15,7 @@ from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from datetime import datetime, timedelta
 from django.db.models import Q
+from django.core import serializers
 from sisred_app.views.views_equipo1 import sincronizarFases
 
 
@@ -527,6 +528,8 @@ Return: Un mensaje de confirmación
 
 @csrf_exempt
 def postRolAsignado(request):
+    NotificacionRolAsignado = 1
+
     if request.method == 'POST':
         error = ''
         try:
@@ -550,7 +553,7 @@ def postRolAsignado(request):
                             rol_asignado = RolAsignado.objects.create(id_conectate=id_conectate, estado=1, red=red,
                                                                       rol=rol, usuario=perfil)
 
-                            result = createNotification(id_red, 1)  # para crear la notificacion
+                            result = createNotification(id_red, NotificacionRolAsignado)  # para crear la notificacion
                             print("notificacion",result)
 
                             if result != {"mensaje": 'La notificacion ha sido creada'}:
@@ -686,6 +689,8 @@ Parametros: request, id del red, id de la fase'''
 
 @csrf_exempt
 def putCambiarFaseRed(request, idRed, idFase):
+    NotificacionCambiarFase = 2#para la creacion de la notificacion
+
     if request.method == 'PUT':
         try:
             red = RED.objects.get(id_conectate=idRed)
@@ -693,25 +698,33 @@ def putCambiarFaseRed(request, idRed, idFase):
 
             idActual = int(red.fase.id_conectate)
 
-            print("putCambiarFaseRed", idActual, idFase)
-            if (idFase > (idActual + 1)) | (idFase < (idActual - 1)):
-                error = 'Debe seleccionar una fase consecutiva para poder hacer el cambio'
+            json_data = json.loads(request.body)
+            comentario = json_data['comentario']
+
+            print("putCambiarFaseRed", idActual, idFase,comentario)
+
+            if comentario==None:
+                error = 'La actualizacion viene sin comentario'
                 return HttpResponseBadRequest(content=error, status=HTTP_400_BAD_REQUEST)
+
+            if idFase < idActual:
+                if (idFase!= 2) | (idActual!=3): # se valida para que permita retroceder solo a la fase de post-produccion
+                    error = 'Debe seleccionar una fase superior para poder hacer el cambio'
+                    return HttpResponseBadRequest(content=error, status=HTTP_400_BAD_REQUEST)
 
             red.fase = fase
             red.save()
 
-            # Llamado a la funcion de sincronizarFases
-            sincronizarFases(idRed, idActual, idFase)
+            sincronizarFases(idRed, idActual, idFase) # Llamado a la funcion de sincronizarFases
 
-            result = createNotification(idRed, 2)  # para crear la notificacion
+            result = createNotification(idRed, NotificacionCambiarFase)  # para crear la notificacion
             print("notificacion:", result)
 
             if result != {"mensaje": 'La notificacion ha sido creada'}:
                 error = 'No fue posible crear la notificacion'
                 return HttpResponseBadRequest(content=error, status=HTTP_400_BAD_REQUEST)
 
-            historialFase = HistorialFases.objects.create(fecha_cambio=datetime.now(), fase=fase, red=red)
+            historialFase = HistorialFases.objects.create(fecha_cambio=datetime.now(), fase=fase, red=red, comentario=comentario)
             historialFase.save()
 
             return HttpResponse(status=HTTP_200_OK)
@@ -913,28 +926,53 @@ Return: 200 correcto 400 incorrecto
 @api_view(["GET"])
 @permission_classes((AllowAny,))
 def buscar_recurso(request):
-    if request.method=='GET':
-        name=request.GET.get("name")
+    if request.method == 'GET':
+        text = request.GET.get("texto")
+        name = request.GET.get("name")
         fechaDesde=request.GET.get ("fdesde")
         fechaHasta = request.GET.get("fhasta")
-        tag = request.GET.get("text")
+        tag = request.GET.get("tag")
+        ##valida si entra a algun filtro sino devolver el arreglo en vacio (0 no entro , 1 entro)
+        validaFiltro=0
 
-        q=Recurso.objects.filter()
+        q = Recurso.objects.filter()
+        if text:
+            print('entro')
+            words = text.lower().split(' ')
+            recursos=[]
+            for word in words:
+                recursos += q.filter(Q(nombre__contains=word) | Q(descripcion__contains=word) | Q(metadata__tag__contains=word))
+
+            print(recursos)
+            serializer = RecursoSerializer(recursos, many=True)
+            return JsonResponse({'context': serializer.data}, safe=True)
 
         if name:
-            q = q.filter(Q(nombre__icontains=name))
+            validaFiltro=1
+            name = name.lower()
+            q = q.filter(Q(nombre__contains=name))
 
         if fechaDesde and not fechaHasta:
-            q=q.filter(Q(fecha_creacion__exact=fechaDesde))
+            validaFiltro = 1
+            q = q.filter(Q(fecha_creacion__exact=fechaDesde))
 
         if fechaDesde and fechaHasta:
+            validaFiltro = 1
             q = q.filter(Q(fecha_creacion__gte=fechaDesde),Q(fecha_creacion__lte=fechaHasta))
 
         if tag:
-            metadata=Metadata.objects.filter(tag=tag).first()
-            q = q.filter(Q(metadata__exact=metadata))
+            validaFiltro = 1
+            tag = tag.lower()
+            q = q.filter(Q(metadata__tag__contains=tag))
 
-        return JsonResponse(list(q.values()), safe=False)
+        if validaFiltro == 0:
+            recursos = []
+            serializer = RecursoSerializer(recursos, many=True)
+            return JsonResponse({'context': serializer.data}, safe=True)
+        else:
+            serializer = RecursoSerializer(q, many=True)
+            return JsonResponse({'context': serializer.data}, safe=True)
+
 
     return HttpResponseNotFound()
 
@@ -1015,6 +1053,7 @@ def createNotification(id_red, id_notificationtype):
         if red != None:
             print("red", red.nombre, id_notificationtype, id_red)
             rol_asignado = RolAsignado.objects.filter(red=red)
+            print("rolAsignado", rol_asignado.count())
 
             if rol_asignado:
 
@@ -1035,15 +1074,16 @@ def createNotification(id_red, id_notificationtype):
                 mensaje = {"mensaje": 'La notificacion ha sido creada'}
                 return mensaje
             else:
-                error = {"error": 'No hay un ROL asignado al RED' + id_red}
+                error = {"error": 'No hay un ROL asignado al RED ' + str(id_red)}
                 return error
         else:
-            error = {"error": 'No hay un RED con el id ' + id_red}
+            error = {"error": 'No hay un RED con el id ' + str(id_red)}
             return error
 
     except Exception as ex:
         error = {"errorInfo": 'Error: ' + str(ex), "error": "Se presentó un error realizando la petición"}
         return error
+
 
 
 def getMetrics(request):
@@ -1053,3 +1093,37 @@ def getMetrics(request):
     if request.method == 'GET':
         serializer = ProyectosSerializer(data, many=True)
     return JsonResponse(serializer.data, safe=False)
+=======
+@api_view(["GET"])
+def getHistoricoAsignadosRed(request, id):
+
+    usuarios=[]
+    if request.method == "GET":
+        fase=Fase.objects.get(nombre_fase='cerrado')
+        red = RED.objects.filter(id=id,fase=fase).first()
+
+        if red != None:
+            print(red.nombre)
+            roles = RolAsignado.objects.filter(red=red)
+            for rol in roles:
+                perfilUsuario = User.objects.get(id=rol.usuario.id)
+                #busco el perfil
+                perfil=Perfil.objects.filter(usuario=perfilUsuario).first()
+                usuario = perfil.usuario
+                print(usuario.first_name + ' ' + usuario.last_name)
+                usuarios.append(usuario.first_name + ' ' + usuario.last_name)
+
+        return JsonResponse(usuarios, status=200,safe=False)
+
+    else:
+        return HttpResponse("Bad request", status=400)
+
+
+
+def getRecurso(request, id):
+    data = Recurso.objects.filter(id=id)
+    if request.method == 'GET':
+        serializer = ResourceSerializer(data, many=True)
+    return JsonResponse(serializer.data, safe=False)
+
+

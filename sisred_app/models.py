@@ -143,6 +143,7 @@ class HistorialFases(models.Model):
     fecha_cambio = models.DateField(default=datetime.date.today)
     fase = models.ForeignKey(Fase, on_delete=models.CASCADE, related_name='historial_fases_red')
     red = models.ForeignKey(RED, on_delete=models.CASCADE)
+    comentario = models.CharField(max_length=500, null=False)
 
     def __str__(self):
         return self.fase.__str__() + " " + self.red.__str__()
