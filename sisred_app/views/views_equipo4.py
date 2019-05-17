@@ -902,6 +902,8 @@ def buscar_recurso(request):
         fechaDesde=request.GET.get ("fdesde")
         fechaHasta = request.GET.get("fhasta")
         tag = request.GET.get("tag")
+        ##valida si entra a algun filtro sino devolver el arreglo en vacio (0 no entro , 1 entro)
+        validaFiltro=0
 
         q = Recurso.objects.filter()
         if text:
@@ -912,28 +914,35 @@ def buscar_recurso(request):
                 recursos += q.filter(Q(nombre__contains=word) | Q(descripcion__contains=word) | Q(metadata__tag__contains=word))
 
             print(recursos)
-
             serializer = RecursoSerializer(recursos, many=True)
             return JsonResponse({'context': serializer.data}, safe=True)
 
+        if name:
+            validaFiltro=1
+            name = name.lower()
+            q = q.filter(Q(nombre__contains=name))
+
+        if fechaDesde and not fechaHasta:
+            validaFiltro = 1
+            q = q.filter(Q(fecha_creacion__exact=fechaDesde))
+
+        if fechaDesde and fechaHasta:
+            validaFiltro = 1
+            q = q.filter(Q(fecha_creacion__gte=fechaDesde),Q(fecha_creacion__lte=fechaHasta))
+
+        if tag:
+            validaFiltro = 1
+            tag = tag.lower()
+            q = q.filter(Q(metadata__tag__contains=tag))
+
+        if validaFiltro == 0:
+            recursos = []
+            serializer = RecursoSerializer(recursos, many=True)
+            return JsonResponse({'context': serializer.data}, safe=True)
         else:
-            if name:
-                name = name.lower()
-                q = q.filter(Q(nombre__icontains=name))
+            serializer = RecursoSerializer(q, many=True)
+            return JsonResponse({'context': serializer.data}, safe=True)
 
-            if fechaDesde and not fechaHasta:
-                q = q.filter(Q(fecha_creacion__exact=fechaDesde))
-
-            if fechaDesde and fechaHasta:
-                q = q.filter(Q(fecha_creacion__gte=fechaDesde),Q(fecha_creacion__lte=fechaHasta))
-
-            if tag:
-                tag=tag.lower()
-                q = q.filter(Q(metadata__tag__contains=tag))
-
-        serializer = RecursoSerializer(q, many=True)
-        return JsonResponse({'context': serializer.data}, safe=True)
-        ##return JsonResponse(list(q.values()), safe=False)
 
     return HttpResponseNotFound()
 
