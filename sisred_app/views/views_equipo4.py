@@ -13,10 +13,11 @@ from rest_framework.status import (HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTT
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.db.models import Q
 from django.core import serializers
 from sisred_app.views.views_equipo1 import sincronizarFases
+
 
 """
 Vista para ver los detalles de un RED en donde se incluyen los recursos (GET)
@@ -773,12 +774,30 @@ def login(request):
     user = authenticate(username=username, password=password)
     if user == None:
         return Response({'error': 'Credenciales inválidas'}, status=HTTP_400_BAD_REQUEST)
+    try:
+        st1 = Perfil.objects.get(usuario=user).estado_sisred
+        st2 = Perfil.objects.get(usuario=user).estado
+    except Perfil.DoesNotExist:
+        return Response({'error': 'Usuario sin perfiles, por favor contacte a su administrador'}, status=HTTP_400_BAD_REQUEST)
+    if st1 is 1 or st2 is 1:
+        return Response({'error': 'Usuario inactivo'}, status=HTTP_400_BAD_REQUEST)
     token, _ = Token.objects.get_or_create(user=user)
-    perfil = Perfil.objects.filter(usuario=user).first()
-    return Response({'token': token.key, 'username': user.username, 'idConectate': perfil.id_conectate,
+    try:
+        perfil = Perfil.objects.filter(usuario=user).first()
+        perfil_user = perfil.id_conectate
+    except Perfil.DoesNotExist:
+        perfil_user = 'No perfil'
+    try:
+        rol = RolAsignado.objects.filter(usuario__usuario__username=username).filter(rol__nombre='Coordinador').first()
+        if rol == None:
+            rol_user = 'Usuario estándar'
+        else:
+            rol_user = rol.rol.nombre
+    except ObjectDoesNotExist:
+        rol_user = 'No rol'
+    return Response({'token': token.key, 'username': user.username, 'idConectate': perfil_user,
                      'firstName': user.first_name, 'lastName': user.last_name,
-                     'numeroIdentificacion': perfil.numero_identificacion}, status=HTTP_200_OK)
-
+                     'numeroIdentificacion': perfil.numero_identificacion, 'privilegio': rol_user}, status=HTTP_200_OK)
 
 """
 Vista para obtener la validez de un token de usuario
@@ -825,7 +844,6 @@ def getRolAsignadoRED(request, id):
     if TokenStatus == True:
         reqUser = Token.objects.get(key=token).user.id
         rol = RolAsignado.objects.filter(red=id).filter(usuario_id=reqUser)
-        print(rol)
         if not rol:
             return Response({'error': 'No autorizado'}, status=HTTP_400_BAD_REQUEST)
         if request.method == 'GET':
@@ -1067,6 +1085,15 @@ def createNotification(id_red, id_notificationtype):
         return error
 
 
+
+def getMetrics(request):
+    logs = RED.objects.all()
+    print(logs)
+    data = ProyectoConectate.objects.all()
+    if request.method == 'GET':
+        serializer = ProyectosSerializer(data, many=True)
+    return JsonResponse(serializer.data, safe=False)
+=======
 @api_view(["GET"])
 def getHistoricoAsignadosRed(request, id):
 
@@ -1098,6 +1125,5 @@ def getRecurso(request, id):
     if request.method == 'GET':
         serializer = ResourceSerializer(data, many=True)
     return JsonResponse(serializer.data, safe=False)
-
 
 

@@ -61,6 +61,7 @@ urlpatterns = [
     path('asignaciones/update/<int:id>/', views_equipo4.putRolAsignado, name='putRolAsignado'),
     path('asignaciones/delete/<int:id>/', views_equipo4.deleteRolAsignado, name='deleteRolAsignado'),
     path('red/<int:idRed>/cambiarfase/<int:idFase>/', views_equipo4.putCambiarFaseRed, name='putCambiarFaseRed'),
+    path('getMetrics/', views_equipo4.getMetrics, name='getMetrics'),
 
     path('fases/', views_equipo4.get_fases, name='fases'),
     path('addMetadataRecurso/<int:id>/', views_equipo4.add_metadata_recurso, name='addMetadataRecurso'),
