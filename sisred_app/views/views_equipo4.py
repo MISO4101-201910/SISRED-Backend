@@ -1065,3 +1065,39 @@ def createNotification(id_red, id_notificationtype):
     except Exception as ex:
         error = {"errorInfo": 'Error: ' + str(ex), "error": "Se presentó un error realizando la petición"}
         return error
+
+
+@api_view(["GET"])
+def getHistoricoAsignadosRed(request, id):
+
+    usuarios=[]
+    if request.method == "GET":
+        fase=Fase.objects.get(nombre_fase='cerrado')
+        red = RED.objects.filter(id=id,fase=fase).first()
+
+        if red != None:
+            print(red.nombre)
+            roles = RolAsignado.objects.filter(red=red)
+            for rol in roles:
+                perfilUsuario = User.objects.get(id=rol.usuario.id)
+                #busco el perfil
+                perfil=Perfil.objects.filter(usuario=perfilUsuario).first()
+                usuario = perfil.usuario
+                print(usuario.first_name + ' ' + usuario.last_name)
+                usuarios.append(usuario.first_name + ' ' + usuario.last_name)
+
+        return JsonResponse(usuarios, status=200,safe=False)
+
+    else:
+        return HttpResponse("Bad request", status=400)
+
+
+
+def getRecurso(request, id):
+    data = Recurso.objects.filter(id=id)
+    if request.method == 'GET':
+        serializer = ResourceSerializer(data, many=True)
+    return JsonResponse(serializer.data, safe=False)
+
+
+

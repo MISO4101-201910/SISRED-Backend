@@ -1209,6 +1209,85 @@ class sisRedTestCase(TestCase):
         self.assertEqual(createNotification(red.id_conectate, notificacionTipo.pk),
                          {"mensaje": 'La notificacion ha sido creada'})
 
+    def test_get_historico_asignados_red_status(self):
+
+        fecha = datetime.datetime.now()
+        proyecto = ProyectoConectate.objects.create(id=1, fecha_inicio=fecha, fecha_fin=fecha)
+        red = RED.objects.create(id=1, nombre='pruebaRED', descripcion='prueba',
+                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyecto)
+
+
+        url = '/api/getHistoricoAsignadosRed/' + str(red.id) + '/'
+
+        response = self.client.get(url, format='json')
+
+        self.assertEqual(response.status_code, 200)
+
+
+    def test_get_historico_asignados_red(self):
+
+        fecha = datetime.datetime.now()
+        proyecto = ProyectoConectate.objects.create(id=1, fecha_inicio=fecha, fecha_fin=fecha)
+        red = RED.objects.create(id=1, nombre='pruebaRED', descripcion='prueba',
+                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyecto)
+        user1 = User.objects.create_user(username='test', password='sihdfnssejkhfse', email='test@test.com', first_name='Nathalia', last_name='Alvarez')
+        user2 = User.objects.create_user(username='test2', password='sihdfnssejkhfse', email='test@test.com', first_name='Fabian', last_name='Laverde')
+        perfil1 = Perfil.objects.create(id_conectate='1', usuario=user1, estado=1)
+        perfil2 = Perfil.objects.create(id_conectate='2', usuario=user2, estado=1)
+        rol1 = Rol.objects.create(id_conectate='1', nombre='rol1')
+        rol2 = Rol.objects.create(id_conectate='2', nombre='rol2')
+        RolAsignado.objects.create(id_conectate='1', estado=1, red=red, rol=rol1, usuario=perfil1)
+        RolAsignado.objects.create(id_conectate='2', estado=1, red=red, rol=rol2, usuario=perfil2)
+
+        url = '/api/getHistoricoAsignadosRed/' + str(red.id) + '/'
+
+        response = self.client.get(url, format='json')
+        usuarios = json.loads(response.content)
+        self.assertEqual(len(usuarios), 2)
+        self.assertEqual(usuarios[0], 'Nathalia Alvarez')
+        self.assertEqual(usuarios[1], 'Fabian Laverde')
+
+
+    def test_get_historico_asignados_red_cerrado(self):
+
+        fecha = datetime.datetime.now()
+        proyecto = ProyectoConectate.objects.create(id=1, fecha_inicio=fecha, fecha_fin=fecha)
+        fase1 = Fase.objects.create(id_conectate='1', nombre_fase='produccion')
+        fase2 = Fase.objects.create(id_conectate='5', nombre_fase='cerrado')
+        red1 = RED.objects.create(id_conectate=1, nombre='pruebaRED1', descripcion='prueba',
+                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyecto, fase=fase1)
+        red2 = RED.objects.create(id_conectate=2, nombre='pruebaRED2', descripcion='prueba',
+                                  tipo='prueba', solicitante='prueba', proyecto_conectate=proyecto, fase=fase2)
+        user1 = User.objects.create_user(username='test', password='sihdfnssejkhfse', email='test@test.com', first_name='Nathalia', last_name='Alvarez')
+        user2 = User.objects.create_user(username='test2', password='sihdfnssejkhfse', email='test@test.com', first_name='Fabian', last_name='Laverde')
+        user3 = User.objects.create_user(username='test3', password='sihdfnssejkhfse', email='test@test.com',
+                                         first_name='Tatiana', last_name='Macias')
+        user4 = User.objects.create_user(username='test4', password='sihdfnssejkhfse', email='test@test.com',
+                                         first_name='Jhon', last_name='Rincon')
+        perfil1 = Perfil.objects.create(id_conectate='1', usuario=user1, estado=1)
+        perfil2 = Perfil.objects.create(id_conectate='2', usuario=user2, estado=1)
+        perfil3 = Perfil.objects.create(id_conectate='3', usuario=user3, estado=1)
+        perfil4 = Perfil.objects.create(id_conectate='4', usuario=user4, estado=1)
+        rol1 = Rol.objects.create(id_conectate='1', nombre='rol1')
+        rol2 = Rol.objects.create(id_conectate='2', nombre='rol2')
+        RolAsignado.objects.create(id_conectate='1', estado=1, red=red1, rol=rol1, usuario=perfil1)
+        RolAsignado.objects.create(id_conectate='2', estado=1, red=red1, rol=rol2, usuario=perfil2)
+        RolAsignado.objects.create(id_conectate='3', estado=1, red=red2, rol=rol1, usuario=perfil3)
+        RolAsignado.objects.create(id_conectate='4', estado=1, red=red2, rol=rol2, usuario=perfil4)
+
+        url_red_produccion = '/api/getHistoricoAsignadosRed/' + str(red1.id) + '/'
+        url_red_cerrado = '/api/getHistoricoAsignadosRed/' + str(red2.id) + '/'
+
+        response1 = self.client.get(url_red_produccion, format='json')
+        response2 = self.client.get(url_red_cerrado, format='json')
+        usuarios_response1 = json.loads(response1.content)
+        usuarios_response2 = json.loads(response2.content)
+
+        self.assertEqual(len(usuarios_response1), 0)
+        self.assertEqual(len(usuarios_response2), 2)
+        self.assertEqual(usuarios_response2[0], 'Tatiana Macias')
+        self.assertEqual(usuarios_response2[1], 'Jhon Rincon')
+
 class RR02TestCase(TestCase):
 
     @skip("Revisar test fallido")

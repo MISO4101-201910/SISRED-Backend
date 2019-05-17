@@ -67,5 +67,6 @@ urlpatterns = [
     path('buscarRecurso/', views_equipo4.buscar_recurso, name='recursos'),
     path('notificaciones/<int:idUsuario>/', views_equipo4.getNotificacionesPorUsuario, name='getNotificacionesPorUsuario'),
     path('notificaciones/<int:idUsuario>/novistos/', views_equipo4.getNotificacionesNoVistosPorUsuario, name='getNotificacionesNoVistosPorUsuario'),
-    path('putNotification/<int:id_notification>/', views_equipo4.putNotification, name='putNotification')
+    path('putNotification/<int:id_notification>/', views_equipo4.putNotification, name='putNotification'),
+    path('getHistoricoAsignadosRed/<int:id>/', views_equipo4.getHistoricoAsignadosRed, name='getHistoricoAsignadosRed')
 ]
