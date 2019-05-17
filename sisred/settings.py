@@ -87,10 +87,10 @@ WSGI_APPLICATION = 'sisred.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.environ["BD_SISRED"],
-        'USER': os.environ["BD_SISRED_USUARIO"],
-        'PASSWORD': os.environ["BD_SISRED_PASSWORD"],
-        'HOST': os.environ["BD_SISRED_HOST"],
+        'NAME': os.environ["BD_SISRED_D_E1"],
+        'USER': os.environ["BD_SISRED_USUARIO_D_E1"],
+        'PASSWORD': os.environ["BD_SISRED_PASSWORD_D_E1"],
+        'HOST': os.environ["BD_SISRED_HOST_D_E1"],
         'PORT': os.environ["BD_SISRED_PORT"]
     }
 }
@@ -137,3 +137,12 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = "/static/"
 
 django_heroku.settings(locals())
+
+import os
+if '/app' in os.environ['HOME']:
+    import django_heroku
+    django_heroku.settings(locals())
+
+import sys
+if 'test' in sys.argv or 'test_coverage' in sys.argv:
+    DATABASES['default']['ENGINE'] = 'django.db.backends.sqlite3'
