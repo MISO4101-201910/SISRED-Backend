@@ -918,7 +918,7 @@ def buscar_recurso(request):
 
         else:
             if name:
-                name=name.lower()
+                name = name.lower()
                 q = q.filter(Q(nombre__icontains=name))
 
             if fechaDesde and not fechaHasta:
@@ -932,8 +932,8 @@ def buscar_recurso(request):
                 q = q.filter(Q(metadata__tag__contains=tag))
 
         serializer = RecursoSerializer(q, many=True)
-        ##return JsonResponse({'context': serializer.data}, safe=True)
-        return JsonResponse(list(q.values()), safe=False)
+        return JsonResponse({'context': serializer.data}, safe=True)
+        ##return JsonResponse(list(q.values()), safe=False)
 
     return HttpResponseNotFound()
 
