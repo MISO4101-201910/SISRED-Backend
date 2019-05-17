@@ -15,7 +15,7 @@ from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from datetime import datetime
 from django.db.models import Q
-
+from django.core import serializers
 from sisred_app.views.views_equipo1 import sincronizarFases
 
 """
@@ -908,28 +908,53 @@ Return: 200 correcto 400 incorrecto
 @api_view(["GET"])
 @permission_classes((AllowAny,))
 def buscar_recurso(request):
-    if request.method=='GET':
-        name=request.GET.get("name")
+    if request.method == 'GET':
+        text = request.GET.get("texto")
+        name = request.GET.get("name")
         fechaDesde=request.GET.get ("fdesde")
         fechaHasta = request.GET.get("fhasta")
-        tag = request.GET.get("text")
+        tag = request.GET.get("tag")
+        ##valida si entra a algun filtro sino devolver el arreglo en vacio (0 no entro , 1 entro)
+        validaFiltro=0
 
-        q=Recurso.objects.filter()
+        q = Recurso.objects.filter()
+        if text:
+            print('entro')
+            words = text.lower().split(' ')
+            recursos=[]
+            for word in words:
+                recursos += q.filter(Q(nombre__contains=word) | Q(descripcion__contains=word) | Q(metadata__tag__contains=word))
+
+            print(recursos)
+            serializer = RecursoSerializer(recursos, many=True)
+            return JsonResponse({'context': serializer.data}, safe=True)
 
         if name:
-            q = q.filter(Q(nombre__icontains=name))
+            validaFiltro=1
+            name = name.lower()
+            q = q.filter(Q(nombre__contains=name))
 
         if fechaDesde and not fechaHasta:
-            q=q.filter(Q(fecha_creacion__exact=fechaDesde))
+            validaFiltro = 1
+            q = q.filter(Q(fecha_creacion__exact=fechaDesde))
 
         if fechaDesde and fechaHasta:
+            validaFiltro = 1
             q = q.filter(Q(fecha_creacion__gte=fechaDesde),Q(fecha_creacion__lte=fechaHasta))
 
         if tag:
-            metadata=Metadata.objects.filter(tag=tag).first()
-            q = q.filter(Q(metadata__exact=metadata))
+            validaFiltro = 1
+            tag = tag.lower()
+            q = q.filter(Q(metadata__tag__contains=tag))
 
-        return JsonResponse(list(q.values()), safe=False)
+        if validaFiltro == 0:
+            recursos = []
+            serializer = RecursoSerializer(recursos, many=True)
+            return JsonResponse({'context': serializer.data}, safe=True)
+        else:
+            serializer = RecursoSerializer(q, many=True)
+            return JsonResponse({'context': serializer.data}, safe=True)
+
 
     return HttpResponseNotFound()
 
