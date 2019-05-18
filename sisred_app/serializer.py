@@ -78,7 +78,7 @@ class RolAsignadoSerializer(serializers.ModelSerializer):
 class comentariosHijosSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comentario
-        fields = '__all__'
+        fields = ('id','contenido','fecha_creacion','esCierre','resuelto','cerrado','usuario','version','UsuarioComentario','comentarioMultimedia')
 
 class comentarioMultimediaSerializer(serializers.ModelSerializer):
     class Meta:
