@@ -144,3 +144,5 @@ if '/app' in os.environ['HOME']:
 import sys
 if 'test' in sys.argv or 'test_coverage' in sys.argv:
     DATABASES['default']['ENGINE'] = 'django.db.backends.sqlite3'
+
+    
