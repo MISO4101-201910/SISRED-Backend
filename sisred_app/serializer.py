@@ -79,8 +79,9 @@ class comentarioMultimediaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComentarioMultimedia
         fields = '__all__'
-        
+
 class comentariosHijosSerializer(serializers.ModelSerializer):
+    comentarioMultimedia=comentarioMultimediaSerializer(many=False)
     class Meta:
         model = Comentario
         fields = ('id','contenido','fecha_creacion','esCierre','resuelto','cerrado','usuario','version','UsuarioComentario','comentarioMultimedia')
