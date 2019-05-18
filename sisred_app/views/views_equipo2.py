@@ -35,6 +35,9 @@ def getRED(request):
 @csrf_exempt
 def marcarVersion(request,id):
     if request.method == 'POST':
+        tokenStatus = getTokenStatus(request)
+        if(not tokenStatus):
+            return HttpResponse('Invalid Token')
         version = get_object_or_404(Version, id=id)
 
         otherVersions = get_list_or_404(Version, red_id = version.red_id)
@@ -224,6 +227,9 @@ class VersionSerializer_v(serializers.ModelSerializer):
 
 @csrf_exempt
 def getVerVersion(request, id):
+    tokenStatus = getTokenStatus(request)
+    if(not tokenStatus):
+        return HttpResponse('Invalid Token')
     version = get_object_or_404(Version, id=id)
 
     serializer = VersionSerializer_v(version, many=False)
@@ -232,6 +238,9 @@ def getVerVersion(request, id):
 
 @csrf_exempt
 def getVerVersionR(request, id):
+    tokenStatus = getTokenStatus(request)
+    if(not tokenStatus):
+        return HttpResponse('Invalid Token')
     version = get_object_or_404(Version, id=id)
 
     serializer = RecursoSerializer(version.recursos, many=True)
@@ -240,6 +249,9 @@ def getVerVersionR(request, id):
 
 @csrf_exempt
 def getVersionesRED(request, id):
+    tokenStatus = getTokenStatus(request)
+    if(not tokenStatus):
+        return HttpResponse('Invalid Token')
     try:
         red = RED.objects.get(pk=id)
     except:
