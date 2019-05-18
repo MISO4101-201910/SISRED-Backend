@@ -1093,7 +1093,7 @@ def getMetrics(request):
     if request.method == 'GET':
         serializer = ProyectosSerializer(data, many=True)
     return JsonResponse(serializer.data, safe=False)
-=======
+
 @api_view(["GET"])
 def getHistoricoAsignadosRed(request, id):
 
