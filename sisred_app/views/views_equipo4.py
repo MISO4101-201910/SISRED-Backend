@@ -1066,7 +1066,7 @@ def getHistoricoAsignadosRed(request, id):
 
     usuarios=[]
     if request.method == "GET":
-        fase=Fase.objects.get(nombre_fase='cerrado')
+        fase=Fase.objects.get(nombre_fase='Cerrado')
         red = RED.objects.filter(id=id,fase=fase).first()
 
         if red != None:

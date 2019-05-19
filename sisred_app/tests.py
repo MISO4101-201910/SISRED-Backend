@@ -1054,9 +1054,9 @@ class sisRedTestCase(TestCase):
 
         response = self.client.get(url, format='json')
         recursos = json.loads(response.content)
-
+        current_data = recursos['context']
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(recursos), 2)
+        self.assertEqual(len(current_data), 2)
 
     def test_list_notificaciones_un_usuario(self):
         user = User.objects.create(username='user1', password='1234ABC', first_name='nombre1',
@@ -1210,7 +1210,10 @@ class sisRedTestCase(TestCase):
                          {"mensaje": 'La notificacion ha sido creada'})
 
     def test_get_historico_asignados_red_status(self):
-
+        fase = Fase.objects.create(
+            id_conectate='5',
+            nombre_fase='Cerrado',
+        )
         fecha = datetime.datetime.now()
         proyecto = ProyectoConectate.objects.create(id=1, fecha_inicio=fecha, fecha_fin=fecha)
         red = RED.objects.create(id=1, nombre='pruebaRED', descripcion='prueba',
@@ -1225,11 +1228,14 @@ class sisRedTestCase(TestCase):
 
 
     def test_get_historico_asignados_red(self):
-
+        fase = Fase.objects.create(
+            id_conectate='5',
+            nombre_fase='Cerrado',
+        )
         fecha = datetime.datetime.now()
         proyecto = ProyectoConectate.objects.create(id=1, fecha_inicio=fecha, fecha_fin=fecha)
         red = RED.objects.create(id=1, nombre='pruebaRED', descripcion='prueba',
-                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyecto)
+                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyecto, fase=fase)
         user1 = User.objects.create_user(username='test', password='sihdfnssejkhfse', email='test@test.com', first_name='Nathalia', last_name='Alvarez')
         user2 = User.objects.create_user(username='test2', password='sihdfnssejkhfse', email='test@test.com', first_name='Fabian', last_name='Laverde')
         perfil1 = Perfil.objects.create(id_conectate='1', usuario=user1, estado=1)
@@ -1253,7 +1259,7 @@ class sisRedTestCase(TestCase):
         fecha = datetime.datetime.now()
         proyecto = ProyectoConectate.objects.create(id=1, fecha_inicio=fecha, fecha_fin=fecha)
         fase1 = Fase.objects.create(id_conectate='1', nombre_fase='produccion')
-        fase2 = Fase.objects.create(id_conectate='5', nombre_fase='cerrado')
+        fase2 = Fase.objects.create(id_conectate='5', nombre_fase='Cerrado')
         red1 = RED.objects.create(id_conectate=1, nombre='pruebaRED1', descripcion='prueba',
                                  tipo='prueba', solicitante='prueba', proyecto_conectate=proyecto, fase=fase1)
         red2 = RED.objects.create(id_conectate=2, nombre='pruebaRED2', descripcion='prueba',
