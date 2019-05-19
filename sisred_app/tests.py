@@ -1240,3 +1240,21 @@ class SisredTestCase(TestCase):
         print(current_data)
 
         self.assertEqual(current_data[0]['listo'], True)
+
+
+class RR08TestCase(TestCase):
+    def test_get_reds_asignados(self):
+        fecha = datetime.datetime.now()
+        proyectto_conectate = ProyectoConectate.objects.create(id_conectate='1', nombre='prueba',
+                                                               codigo='prueba', fecha_inicio=fecha,
+                                                               fecha_fin=fecha)
+        red = RED.objects.create(id_conectate='1', nombre='pruebaRED', descripcion='prueba',
+                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyectto_conectate)
+        user_model = User.objects.create_user(username='user1', password='1234ABC*', first_name='Usuario',
+                                              last_name='uno', email='user1@coquito.com')
+        perfil = Perfil.objects.create(id_conectate='1', usuario=user_model, estado=1)
+        rol = Rol.objects.create(id_conectate='1', nombre='rolPrueba')
+        RolAsignado.objects.create(id_conectate='1', estado=1, red=red, rol=rol, usuario=perfil)
+        response = self.client.get('/api/reds/asignados/1')
+        current_data = json.loads(response.content)
+        self.assertEqual(len(current_data), 1)
