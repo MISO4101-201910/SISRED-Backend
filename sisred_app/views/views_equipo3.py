@@ -20,6 +20,7 @@ from rest_framework.response import Response
 # Metodo para agregar un proyecto RED
 from sisred_app.serializer import RolAsignadoSerializer
 
+urlRed = 'conectatePrueba.com/'
 
 @csrf_exempt
 def post_proyecto_red(request):
@@ -90,22 +91,10 @@ def get_detallered(request):
         red = request.GET['RED']
         red = RED.objects.get(id=red)
         nombreRed = red.nombre
-        url = 'conectatePrueba.com/'+nombreRed
+        url = urlRed+nombreRed
         status = 'No tiene'
         nombreProject = red.proyecto_conectate.nombre
         fase = red.fase
-        """historiales = HistorialEstados.objects.filter(red=red.pk)
-
-        if len(historiales) > 1:
-            ultimo = historiales[0]
-            ultimoDate = datetime.date(datetime(1800,1,1))
-            for hist in historiales :
-                datAct = hist.fecha_cambio
-                actDate = hist.fecha_cambio
-                if datAct > ultimoDate:
-                    ultimo = hist
-                    ultimoDate = actDate
-            status = ultimo.estado.nombre_estado"""
         fase_json = {"idConectate": fase.id_conectate, "nombreFase": fase.nombre_fase}
         respuesta = {"nombreRed": nombreRed, "nombreProject":nombreProject, "status":status, "url": url, "fase": fase_json}
 
@@ -151,7 +140,6 @@ def get_recursos_by_version(request):
 @csrf_exempt
 def get_comentarios_video(request, id):
     if request.method == 'GET':
-        print("Obteniendo comentarios del ID " + str(id))
         respuesta = []
         multimedias=[]
         try:
@@ -190,12 +178,10 @@ def get_comentarios_video(request, id):
                 respuesta.append({"id": multimedia.pk, "range": rangeEsp, "shape": shape, "comments": comentEsp,
                                   "abiertos":0, "cerrados":0})
 
-                print(respuesta)
             respuesta[0]['abiertos'] = len(respuesta) - cont
             respuesta[0]['cerrados'] = cont
             return HttpResponse(json.dumps(respuesta, default=decimal_default), content_type="application/json")
         except Exception as ex:
-            print(ex)
             print("ERROR OBTENIENDO LOS COMENTARIOS DEL VIDEO " + str(ex))
         return HttpResponse(json.dumps(respuesta, default=decimal_default), content_type="application/json")
 
@@ -203,9 +189,7 @@ def get_comentarios_video(request, id):
 @csrf_exempt
 def post_comentarios_video(request, idVersion, idRecurso):
     if request.method == 'POST':
-        print("Persistiendo Comentarios Video en BD")
         commentsDetails = json.loads(request.body)
-        print(commentsDetails)
         for commentData in commentsDetails:
             idMultimedia = commentData['id']
             comentarioMultimedia = None
@@ -235,8 +219,6 @@ def post_comentarios_video(request, idVersion, idRecurso):
                     y2=y2
                 )
                 comentarioMultimedia.save()
-            print("ComentarioMultimediaData->")
-            print(comentarioMultimedia)
 
             rangeStart = commentData['range']['start']
             rangeStop = None
@@ -248,57 +230,55 @@ def post_comentarios_video(request, idVersion, idRecurso):
             #########  COMENTARIO VIDEO ###########
 
             comentarioVideo = ComentarioVideo.objects.filter(seg_ini=rangeStart).filter(seg_fin=rangeStop).filter(comentario_multimedia=comentarioMultimedia)
-            print(comentarioVideo)
             if not comentarioVideo:
                 comentarioVideo = ComentarioVideo(
                     seg_ini=rangeStart,
                     seg_fin=rangeStop + 1,
                     comentario_multimedia=comentarioMultimedia
                 )
-                print("Creando Comentario Video")
                 comentarioVideo.save()
 
-            #########  COMENTARIO  ###########
-            comentarios = commentData['comments']
-            print("Comentarios->")
-            for comment in comentarios:
-                idComentario = comment['id']
-                commentBody = comment['body']
-                userID = comment['meta']['user_id']
-                dateTime = comment['meta']['datetime']
-                print("Validando comentario ID: "+str(idComentario))
-                try:
-                    if (isNum(idComentario)):  # Ya que la libreria envia unas cadenas
-                        comentario = Comentario.objects.get(pk=idComentario)
-                        print("Se ignora ya que existe -> "+comentario.contenido)
-                        continue
-                    else:
-                        try:
-                            comentario = Comentario.objects.get(id_video_libreria=idComentario)
-                        except Exception as ex:
-                            comentario = None
-                            print("No existe")
-                        if(comentario == None):
-                            print("Creando Nuevo objeto")
-                            version = Version.objects.get(pk=idVersion)
-                            recurso = Recurso.objects.get(pk=idRecurso)
-                            usuario = Perfil.objects.get(id_conectate=userID)
-
-                            comentario = Comentario(
-                                id_video_libreria=idComentario,
-                                contenido=commentBody,
-                                version=version,
-                                recurso=recurso,
-                                usuario=usuario,
-                                comentario_multimedia=comentarioMultimedia
-                            )
-                            print(comment)
-                            print(comentario)
-                            comentario.save()
-                except Exception as ex:
-                    print(ex)
+            saveComentario(commentData['comments'], comentarioMultimedia, idVersion, idRecurso)
 
         return HttpResponse()
+
+# Metodo que guarda el comentario
+def saveComentario(comentarios, comentarioMultimedia, idVersion, idRecurso):
+    #########  COMENTARIO  ###########
+    for comment in comentarios:
+        idComentario = comment['id']
+        commentBody = comment['body']
+        userID = comment['meta']['user_id']
+        dateTime = comment['meta']['datetime']
+        try:
+            if (isNum(idComentario)):  # Ya que la libreria envia unas cadenas
+                comentario = Comentario.objects.get(pk=idComentario)
+                print("Se ignora ya que existe -> " + comentario.contenido)
+                continue
+            else:
+                try:
+                    comentario = Comentario.objects.get(id_video_libreria=idComentario)
+                except Exception as ex:
+                    comentario = None
+                    print("No existe")
+                if (comentario == None):
+                    print("Creando Nuevo objeto")
+                    version = Version.objects.get(pk=idVersion)
+                    recurso = Recurso.objects.get(pk=idRecurso)
+                    usuario = Perfil.objects.get(id_conectate=userID)
+
+                    comentario = Comentario(
+                        id_video_libreria=idComentario,
+                        contenido=commentBody,
+                        version=version,
+                        recurso=recurso,
+                        usuario=usuario,
+                        comentario_multimedia=comentarioMultimedia
+                    )
+                    comentario.save()
+        except Exception as ex:
+            print(ex)
+
 
 # Metodo para obtener la url del recurso video
 @csrf_exempt
