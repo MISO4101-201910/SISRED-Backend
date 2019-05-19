@@ -26,6 +26,7 @@ urlpatterns = [
     path('revisiones/<int:id>', views_equipo3.get_versiones_revision, name='revisiones'),
     path('post_comment/', views_equipo3.post_comment, name='agregar_comentario'),
     path('get_comentarios/<int:idRecurso>', views_equipo3.get_comentarios, name='treer_comentarios'),
+    path('comentarios/video/cierre', views_equipo3.post_cerrar_comentario_video, name='cerrarComentarioVideo'),
 
     path('getProyectosRED/', views_equipo2.getProyectosRED),
     path('getRecurso/', views_equipo2.getRecurso),
@@ -55,6 +56,7 @@ urlpatterns = [
     path('getRedDetailRecursos/<int:id>/', views_equipo4.getRedDetailRecursos, name='getRedDetailRecursos'),
     path('getUserAut/', views_equipo4.getUserAut, name='getUserAut'),
     path('getRolAsignadoRED/<int:id>/', views_equipo4.getRolAsignadoRED, name='getRolAsignadoRED'),
+    path('getRolAsignadoREDPorRecurso/<int:idRecurso>/<int:idUsuario>', views_equipo3.getRolAsignadoREDPorRecurso, name='getRolAsignadoREDPorRecurso'),
     path('update_sisred/', views_equipo4.update_sisred, name='update_sisred'),
     path('reds/', views_equipo4.get_red, name='reds'),
     path('sisred_create/', views_equipo4.sisred_create, name='sisred_create'),

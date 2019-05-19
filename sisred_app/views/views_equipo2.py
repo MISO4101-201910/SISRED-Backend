@@ -307,7 +307,7 @@ def getListaComentarios(request,id_v, id_r):
     version = get_object_or_404(Version, id=id_v)
     recurso = get_object_or_404(Recurso, id=id_r)
 
-    data=Comentario.objects.filter(version=version, recurso=recurso)
+    data=Comentario.objects.filter(version=version, recurso=recurso).order_by('-fecha_creacion')
     serializer=ComentarioSerializer(data, many=True)
     return JsonResponse({'context': serializer.data}, safe=True)
 

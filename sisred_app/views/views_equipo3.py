@@ -1,19 +1,26 @@
+from tokenize import Token
+
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 import json, decimal
 from django.http import JsonResponse
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.status import HTTP_400_BAD_REQUEST
+
 from sisred_app.models import RED, ProyectoRED, RolAsignado, Perfil, Metadata, Recurso, ProyectoConectate, Version, Comentario, ComentarioMultimedia, ComentarioVideo
 from django.http import HttpResponse
 from django.core import serializers
 from django.contrib.auth.models import User
-from datetime import datetime, timedelta
-
-from django.utils.formats import get_format
-from django.utils.dateparse import parse_date
+from rest_framework.authtoken.models import Token
+from rest_framework.response import Response
 
 # Create your views here.
 
 # Metodo para agregar un proyecto RED
+from sisred_app.serializer import RolAsignadoSerializer
+
+
 @csrf_exempt
 def post_proyecto_red(request):
     if request.method == 'POST':
@@ -158,6 +165,7 @@ def get_comentarios_video(request, id):
         try:
             recurso = Recurso.objects.get(pk=id)
             comentarios = Comentario.objects.filter(recurso=recurso)
+            cont = 0
             for comentario in comentarios:
                 if comentario.comentario_multimedia not in multimedias:
                     multimedias.append(comentario.comentario_multimedia)
@@ -179,9 +187,20 @@ def get_comentarios_video(request, id):
                     idUsuario = usuario.pk
                     metaVideo = {"datetime": comEsp.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S'), "user_id": idUsuario,
                                  "user_name": nombreUsuario}
-                    comentEsp.append({"id": str(comEsp.pk), "meta": metaVideo, "body": comEsp.contenido})
-                respuesta.append({"id": multimedia.pk, "range": rangeEsp, "shape": shape, "comments": comentEsp})
+                    comentEsp.append({"id": str(comEsp.pk), "meta": metaVideo, "body": comEsp.contenido,
+                                      "cerrado": comEsp.cerrado, "resuelto": comEsp.resuelto, "es_cierre": comEsp.esCierre})
+
+                comentEsp = sorted(comentEsp, key=lambda k: k['meta'].get('datetime', 0), reverse=False)
+                output_dict = [x for x in comentEsp if x['cerrado']]
+                if len(output_dict) > 0:
+                    comentEsp[0]['cerrado'] = True
+                    cont = cont + len(output_dict)
+                respuesta.append({"id": multimedia.pk, "range": rangeEsp, "shape": shape, "comments": comentEsp,
+                                  "abiertos":0, "cerrados":0})
+
                 print(respuesta)
+            respuesta[0]['abiertos'] = len(respuesta) - cont
+            respuesta[0]['cerrados'] = cont
             return HttpResponse(json.dumps(respuesta, default=decimal_default), content_type="application/json")
         except Exception as ex:
             print(ex)
@@ -271,7 +290,7 @@ def post_comentarios_video(request, idVersion, idRecurso):
                             print("Creando Nuevo objeto")
                             version = Version.objects.get(pk=idVersion)
                             recurso = Recurso.objects.get(pk=idRecurso)
-                            usuario = Perfil.objects.get(pk=userID)
+                            usuario = Perfil.objects.get(id_conectate=userID)
 
                             comentario = Comentario(
                                 id_video_libreria=idComentario,
@@ -332,7 +351,6 @@ def get_versiones_revision(request, id):
                 respuesta.append({"versionId": ver.pk,"redId": rol.red.pk, "rol": rol.rol.nombre, "red": rol.red.nombre, "fecha": ver.fecha_creacion.strftime("%d/%m/%Y")})
     return HttpResponse(json.dumps(respuesta), content_type="application/json")
 
-
 @csrf_exempt
 def get_comentarios(request,idRecurso):
         if request.method == 'GET':
@@ -371,3 +389,38 @@ def post_comment(request):
             nuevo_comentario.save()
 
         return HttpResponse(serializers.serialize("json", [nuevo_comentario]))
+
+# Metodo para cerrar comentario de un recurso tipo video
+@csrf_exempt
+def post_cerrar_comentario_video(request):
+    if request.method == 'POST':
+        json_comentario_cierre = json.loads(request.body)
+        recurso = Recurso.objects.get(pk=json_comentario_cierre['id_recurso'])
+        perfil = Perfil.objects.get(id_conectate=json_comentario_cierre['id_usuario'])
+        multimedia = ComentarioMultimedia.objects.get(pk=json_comentario_cierre['id_multimedia'])
+        comentario_cierre = Comentario(
+            contenido=json_comentario_cierre['contenido'],
+            recurso=recurso,
+            usuario=perfil,
+            comentario_multimedia=multimedia,
+            cerrado=json_comentario_cierre['cerrado'],
+            resuelto=json_comentario_cierre['resuelto'],
+            esCierre=json_comentario_cierre['es_cierre'])
+        comentario_cierre.save()
+        return HttpResponse(serializers.serialize("json", [comentario_cierre]))
+
+
+@csrf_exempt
+@api_view(["GET"])
+@permission_classes((AllowAny,))
+def getRolAsignadoREDPorRecurso(request, idRecurso, idUsuario):
+        recurso = Recurso.objects.get(pk=idRecurso)
+        red = RED.objects.get(recursos__pk=idRecurso) #RED.objects.distinct().first().recursos.distinct().first()
+        idRed = red.pk
+        rol = RolAsignado.objects.filter(red=idRed).filter(usuario__pk=idUsuario)
+        print(rol)
+        if not rol:
+            return Response({'error': 'No autorizado'}, status=HTTP_400_BAD_REQUEST)
+        if request.method == 'GET':
+            serializer = RolAsignadoSerializer(rol, many=True)
+            return JsonResponse(serializer.data, safe=False)
