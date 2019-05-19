@@ -331,3 +331,43 @@ def get_versiones_revision(request, id):
             for ver in versiones:
                 respuesta.append({"versionId": ver.pk,"redId": rol.red.pk, "rol": rol.rol.nombre, "red": rol.red.nombre, "fecha": ver.fecha_creacion.strftime("%d/%m/%Y")})
     return HttpResponse(json.dumps(respuesta), content_type="application/json")
+
+
+@csrf_exempt
+def get_comentarios(request,idRecurso):
+        if request.method == 'GET':
+            comentarios = Comentario.objects.filter(recurso=idRecurso)
+            respuesta = []
+            for com in comentarios:
+                perfil = Perfil.objects.get(pk=com.usuario_id)
+                usuario = User.objects.get(pk=perfil.usuario_id)
+                nombre = usuario.first_name + " " + usuario.last_name
+                respuesta.append(
+                    {"contenido": com.contenido, "recurso": com.recurso_id, "version": com.version_id,
+                     "usuario": nombre, "fecha": com.fecha_creacion.strftime("%d/%m/%Y %H:%M:%S")})
+            if len(comentarios) == 0:
+                return HttpResponse('no hay registros')
+
+            return HttpResponse(json.dumps(respuesta), content_type="application/json")
+
+
+@csrf_exempt
+def post_comment(request):
+    if request.method == 'POST':
+        json_comentarios = json.loads(request.body)
+        recurso = Recurso.objects.get(id=json_comentarios['recurso_id'])
+        version = Version.objects.get(id=json_comentarios['version_id'])
+        perfil = Perfil.objects.get(id_conectate=json_comentarios['usuario_id'])
+        if recurso == None:
+            return HttpResponse('El recurso debe existir')
+        else:
+            json_comment = json.loads(request.body)
+            nuevo_comentario = Comentario(
+                contenido=json_comment['contenido'],
+                recurso_id=recurso.pk,
+                usuario_id=perfil.pk,
+                version_id=version.pk
+                )
+            nuevo_comentario.save()
+
+        return HttpResponse(serializers.serialize("json", [nuevo_comentario]))
