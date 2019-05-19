@@ -752,7 +752,7 @@ def login(request):
         st2 = Perfil.objects.get(usuario=user).estado
     except Perfil.DoesNotExist:
         return Response({'error': 'Usuario sin perfiles, por favor contacte a su administrador'}, status=HTTP_400_BAD_REQUEST)
-    if st1 is 1 or st2 is 1:
+    if st1 is 2 or st2 is 2:
         return Response({'error': 'Usuario inactivo'}, status=HTTP_400_BAD_REQUEST)
     token, _ = Token.objects.get_or_create(user=user)
     try:
