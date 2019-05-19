@@ -127,7 +127,6 @@ def get_recursos_by_version(request):
 @csrf_exempt
 def get_comentarios_video(request, id):
     if request.method == 'GET':
-        print("Obteniendo comentarios del ID " + str(id))
         respuesta = []
         multimedias=[]
         try:
@@ -166,12 +165,10 @@ def get_comentarios_video(request, id):
                 respuesta.append({"id": multimedia.pk, "range": rangeEsp, "shape": shape, "comments": comentEsp,
                                   "abiertos":0, "cerrados":0})
 
-                print(respuesta)
             respuesta[0]['abiertos'] = len(respuesta) - cont
             respuesta[0]['cerrados'] = cont
             return HttpResponse(json.dumps(respuesta, default=decimal_default), content_type="application/json")
         except Exception as ex:
-            print(ex)
             print("ERROR OBTENIENDO LOS COMENTARIOS DEL VIDEO " + str(ex))
         return HttpResponse(json.dumps(respuesta, default=decimal_default), content_type="application/json")
 
@@ -179,9 +176,7 @@ def get_comentarios_video(request, id):
 @csrf_exempt
 def post_comentarios_video(request, idVersion, idRecurso):
     if request.method == 'POST':
-        print("Persistiendo Comentarios Video en BD")
         commentsDetails = json.loads(request.body)
-        print(commentsDetails)
         for commentData in commentsDetails:
             idMultimedia = commentData['id']
             comentarioMultimedia = None
@@ -211,9 +206,6 @@ def post_comentarios_video(request, idVersion, idRecurso):
                     y2=y2
                 )
                 comentarioMultimedia.save()
-            print("ComentarioMultimediaData->")
-            print(comentarioMultimedia)
-
             rangeStart = commentData['range']['start']
             rangeStop = None
             try:
@@ -224,14 +216,12 @@ def post_comentarios_video(request, idVersion, idRecurso):
             #########  COMENTARIO VIDEO ###########
 
             comentarioVideo = ComentarioVideo.objects.filter(seg_ini=rangeStart).filter(seg_fin=rangeStop).filter(comentario_multimedia=comentarioMultimedia)
-            print(comentarioVideo)
             if not comentarioVideo:
                 comentarioVideo = ComentarioVideo(
                     seg_ini=rangeStart,
                     seg_fin=rangeStop + 1,
                     comentario_multimedia=comentarioMultimedia
                 )
-                print("Creando Comentario Video")
                 comentarioVideo.save()
 
             saveComentario(commentData['comments'], comentarioMultimedia, idVersion, idRecurso)
@@ -249,16 +239,13 @@ def saveComentario(comentarios, comentarioMultimedia, idVersion, idRecurso):
         try:
             if (isNum(idComentario)):  # Ya que la libreria envia unas cadenas
                 comentario = Comentario.objects.get(pk=idComentario)
-                print("Se ignora ya que existe -> " + comentario.contenido)
                 continue
             else:
                 try:
                     comentario = Comentario.objects.get(id_video_libreria=idComentario)
                 except Exception as ex:
                     comentario = None
-                    print("No existe")
                 if (comentario == None):
-                    print("Creando Nuevo objeto")
                     version = Version.objects.get(pk=idVersion)
                     recurso = Recurso.objects.get(pk=idRecurso)
                     usuario = Perfil.objects.get(id_conectate=userID)
@@ -280,14 +267,12 @@ def saveComentario(comentarios, comentarioMultimedia, idVersion, idRecurso):
 @csrf_exempt
 def get_url_recurso_video(request, id):
     if request.method == 'GET':
-        print("Obteniendo url del recurso con ID " + str(id))
         respuesta = []
         try:
             recurso = Recurso.objects.get(pk=id)
             respuesta.append({"url": recurso.archivo})
             return HttpResponse(json.dumps(respuesta), content_type="application/json")
         except Exception as ex:
-            print(ex)
             print("ERROR OBTENIENDO LA URL DEL VIDEO " + str(ex))
         return HttpResponse(json.dumps(respuesta), content_type="application/json")
 
@@ -386,7 +371,6 @@ def getRolAsignadoREDPorRecurso(request, idRecurso, idUsuario):
         red = RED.objects.get(recursos__pk=idRecurso) #RED.objects.distinct().first().recursos.distinct().first()
         idRed = red.pk
         rol = RolAsignado.objects.filter(red=idRed).filter(usuario__pk=idUsuario)
-        print(rol)
         if not rol:
             return Response({'error': 'No autorizado'}, status=HTTP_400_BAD_REQUEST)
         if request.method == 'GET':
@@ -411,7 +395,6 @@ def get_reds_asignados(request, id):
                 version_numero = version.numero
             except Version.DoesNotExist:
                 version = None
-            print(version)
             reds_asignados.append(
                 {"idRed": red.pk, "nombreRed": red.nombre, "descripcion": red.descripcion, "tipo": red.tipo, "solicitante": red.solicitante, "fecha_inicio": red.fecha_inicio, "fecha_cierre": red.fecha_cierre, "porcentaje": red.porcentaje_avance, "horas_estimadas": red.horas_estimadas, "listo_revision": red.listo_para_revision, "version_id": version_id, "version_numero": version_numero})
         respuesta = {
