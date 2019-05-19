@@ -374,6 +374,16 @@ class sisred_appTestCase(TestCase):
         self.assertEqual(reds[1]['id'], 3)
 
 class CrearVersion(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='test', password='sihdfnssejkhfse', email='test@test.com', first_name="fname",last_name="lname")
+        self.perfil = Perfil.objects.create(id_conectate='1', usuario=self.user, estado=1)
+        self.rol = Rol.objects.create(id_conectate='1', nombre='rolPrueba')
+        Token.objects.create(user=self.user)
+        token = Token.objects.get(user=self.user)
+        token.save()
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+
     def testCrearVersionHappyPath(self):
         fecha = datetime.datetime.now()
         userModel = User.objects.create_user(username="testImagen", password="testImagen", first_name="testImagen",
@@ -521,6 +531,11 @@ class VersionTestCase(TestCase):
         user = User.objects.create_user(username='test2', password='123456', email='test@test.com', first_name='test',
                                         last_name='T')
         perfil = Perfil.objects.create(id_conectate=123, usuario=user, estado=1)
+        Token.objects.create(user=user)
+        token = Token.objects.get(user=user)
+        token.save()
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
         proyecto = ProyectoConectate.objects.create(id_conectate='1', nombre='MISO', codigo='1234',
                                                     fecha_inicio='2019-03-20', fecha_fin='2019-04-10')
         self.red = RED.objects.create(id_conectate='1', nombre='elRED', descripcion=' ',
@@ -537,6 +552,11 @@ class VersionTestCase(TestCase):
         user = User.objects.create_user(username='test2', password='123456', email='test@test.com', first_name='test',
                                         last_name='T')
         perfil = Perfil.objects.create(id_conectate=123, usuario=user, estado=1)
+        Token.objects.create(user=user)
+        token = Token.objects.get(user=user)
+        token.save()
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
         proyecto = ProyectoConectate.objects.create(id_conectate='1', nombre='MISO', codigo='1234',
                                                     fecha_inicio='2019-03-20', fecha_fin='2019-04-10')
         self.red = RED.objects.create(id_conectate='1', nombre='elRED', descripcion=' ',
@@ -555,6 +575,11 @@ class VersionTestCase(TestCase):
         user = User.objects.create_user(username='test2', password='123456', email='test@test.com', first_name='test',
                                         last_name='T')
         perfil = Perfil.objects.create(id_conectate=123, usuario=user, estado=1)
+        Token.objects.create(user=user)
+        token = Token.objects.get(user=user)
+        token.save()
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
         proyecto = ProyectoConectate.objects.create(id_conectate='1', nombre='MISO', codigo='1234',
                                                     fecha_inicio='2019-03-20', fecha_fin='2019-04-10')
         self.red = RED.objects.create(id_conectate='1', nombre='elRED', descripcion=' ',
@@ -572,6 +597,11 @@ class VersionTestCase(TestCase):
         user = User.objects.create_user(username='test2', password='123456', email='test@test.com', first_name='test',
                                         last_name='T')
         perfil = Perfil.objects.create(id_conectate=123, usuario=user, estado=1)
+        Token.objects.create(user=user)
+        token = Token.objects.get(user=user)
+        token.save()
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
         proyecto = ProyectoConectate.objects.create(id_conectate='1', nombre='MISO', codigo='1234',
                                                     fecha_inicio='2019-03-20', fecha_fin='2019-04-10')
         recurso1 = Recurso.objects.create(nombre='test', tipo='PNG', archivo='url', thumbnail='url1', descripcion=' ',
@@ -596,6 +626,11 @@ class VersionTestCase(TestCase):
         user = User.objects.create_user(username='test2', password='123456', email='test@test.com', first_name='test',
                                         last_name='T')
         perfil = Perfil.objects.create(id_conectate=123, usuario=user, estado=1)
+        Token.objects.create(user=user)
+        token = Token.objects.get(user=user)
+        token.save()
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
         proyecto = ProyectoConectate.objects.create(id_conectate='1', nombre='MISO', codigo='1234',
                                                     fecha_inicio='2019-03-20', fecha_fin='2019-04-10')
         recurso1 = Recurso.objects.create(nombre='test', tipo='PNG', archivo='url', thumbnail='url1', descripcion=' ',
@@ -622,6 +657,16 @@ class VersionTestCase(TestCase):
 
 
 class ComentarImagen(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testUser', password='sihdfnssejkhfse', email='test@test.com', first_name="fname",last_name="lname")
+        self.perfil = Perfil.objects.create(id_conectate='1', usuario=self.user, estado=1)
+        self.rol = Rol.objects.create(id_conectate='1', nombre='rolPrueba')
+        Token.objects.create(user=self.user)
+        token = Token.objects.get(user=self.user)
+        token.save()
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+
     def testComentarExistente(self):
         user = User.objects.create_user(username='test2', password='123456', email='test@test.com', first_name='test',
                                         last_name='T')
@@ -663,9 +708,7 @@ class ComentarImagen(TestCase):
     def testCrearComentario(self):
         user = User.objects.create_user(username='test2', password='123456', email='test@test.com', first_name='test',
                                         last_name='T')
-        user2 = User.objects.create_user(username='test23', password='123456', email='test@test.com', first_name='test',
-                                         last_name='T')
-        perfil2 = Perfil.objects.create(id_conectate=125, usuario=user2, estado=1)
+        
         perfil = Perfil.objects.create(id_conectate=123, usuario=user, estado=1)
         proyecto = ProyectoConectate.objects.create(id_conectate='1', nombre='MISO', codigo='1234',
                                                     fecha_inicio='2019-03-20', fecha_fin='2019-04-10')
@@ -688,7 +731,6 @@ class ComentarImagen(TestCase):
                 "x2": 1.1,
                 "y1": 0,
                 "y2": 2.2,
-                "usuario": user2.pk,
                 "contenido": "hola",
 
             }), content_type='application/json')
@@ -697,7 +739,7 @@ class ComentarImagen(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(coment['comentario_multimedia']['x1'], '0.00')
-        self.assertEqual(coment['usuario']['usuario']['username'], 'test23')
+        self.assertEqual(coment['usuario']['usuario']['username'], 'testUser')
 
     def testListarComentarios(self):
         user = User.objects.create_user(username='test2', password='123456', email='test@test.com', first_name='test',
@@ -747,6 +789,11 @@ class ListarVersionesTestCase(TestCase):
     def setUp(self):
         user = User.objects.create_user(username='test', password='sihdfnssejkhfse', email='test@test.com')
         perfil = Perfil.objects.create(id_conectate='1', usuario=user, estado=1)
+        Token.objects.create(user=user)
+        token = Token.objects.get(user=user)
+        token.save()
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
         proyecto = ProyectoConectate.objects.create(id_conectate='1', nombre='MISO', codigo='1234',
                                                     fecha_inicio='2019-03-20', fecha_fin='2019-04-10')
         self.red = RED.objects.create(id_conectate='1', nombre='elRED', descripcion='la descripcion',
@@ -799,6 +846,11 @@ class VersionMarcarTestCase(TestCase):
     def setUp(self):
         user = User.objects.create_user(username='test', password='sihdfnssejkhfse', email='test@test.com')
         perfil = Perfil.objects.create(id_conectate='1', usuario=user, estado=1)
+        Token.objects.create(user=user)
+        token = Token.objects.get(user=user)
+        token.save()
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
         proyecto = ProyectoConectate.objects.create(id_conectate='1', nombre='MISO', codigo='1234',
                                                     fecha_inicio='2019-03-20', fecha_fin='2019-04-10')
         self.red = RED.objects.create(id_conectate='1', nombre='elRED', descripcion='la descripcion',
