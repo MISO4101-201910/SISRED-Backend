@@ -342,3 +342,25 @@ def get_comentarios(request,idRecurso):
                 return HttpResponse('no hay registros')
 
             return HttpResponse(json.dumps(respuesta), content_type="application/json")
+
+
+@csrf_exempt
+def post_comment(request):
+    if request.method == 'POST':
+        json_comentarios = json.loads(request.body)
+        recurso = Recurso.objects.get(id=json_comentarios['recurso_id'])
+        version = Version.objects.get(id=json_comentarios['version_id'])
+        perfil = Perfil.objects.get(id_conectate=json_comentarios['usuario_id'])
+        if recurso == None:
+            return HttpResponse('El recurso debe existir')
+        else:
+            json_comment = json.loads(request.body)
+            nuevo_comentario = Comentario(
+                contenido=json_comment['contenido'],
+                recurso_id=recurso.pk,
+                usuario_id=perfil.pk,
+                version_id=version.pk
+                )
+            nuevo_comentario.save()
+
+        return HttpResponse(serializers.serialize("json", [nuevo_comentario]))
