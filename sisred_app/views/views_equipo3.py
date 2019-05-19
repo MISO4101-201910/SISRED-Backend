@@ -111,29 +111,6 @@ def get_detallered(request):
 
     return HttpResponse(json.dumps(respuesta), content_type="application/json")
 
-@csrf_exempt
-def get_reds_asignados(request, id):
-    if request.method == 'GET':
-        perfil = Perfil.objects.get(id_conectate=id)
-        reds_asignados = []
-        rolesAsignado = RolAsignado.objects.filter(usuario=perfil)
-        for rolAsignado in rolesAsignado:
-            red = rolAsignado.red
-            version_id = None
-            version_numero = None
-            try:
-                version = Version.objects.filter(red=red).latest('fecha_creacion')
-                version_id = version.id
-                version_numero = version.numero
-            except Version.DoesNotExist:
-                version = None
-            print(version)
-            reds_asignados.append(
-                {"idRed": red.pk, "nombreRed": red.nombre, "descripcion": red.descripcion, "tipo": red.tipo, "solicitante": red.solicitante, "fecha_inicio": red.fecha_inicio, "fecha_cierre": red.fecha_cierre, "porcentaje": red.porcentaje_avance, "horas_estimadas": red.horas_estimadas, "listo_revision": red.listo_para_revision, "version_id": version_id, "version_numero": version_numero})
-        respuesta = {
-            "redsAsignados": reds_asignados}
-        return JsonResponse(respuesta, safe=False)
-
 
 #Metodo para obtener los datos de una version dado su id y el RED asociado
 @csrf_exempt
@@ -424,3 +401,28 @@ def getRolAsignadoREDPorRecurso(request, idRecurso, idUsuario):
         if request.method == 'GET':
             serializer = RolAsignadoSerializer(rol, many=True)
             return JsonResponse(serializer.data, safe=False)
+
+            
+            
+@csrf_exempt
+def get_reds_asignados(request, id):
+    if request.method == 'GET':
+        perfil = Perfil.objects.get(id_conectate=id)
+        reds_asignados = []
+        rolesAsignado = RolAsignado.objects.filter(usuario=perfil)
+        for rolAsignado in rolesAsignado:
+            red = rolAsignado.red
+            version_id = None
+            version_numero = None
+            try:
+                version = Version.objects.filter(red=red).latest('fecha_creacion')
+                version_id = version.id
+                version_numero = version.numero
+            except Version.DoesNotExist:
+                version = None
+            print(version)
+            reds_asignados.append(
+                {"idRed": red.pk, "nombreRed": red.nombre, "descripcion": red.descripcion, "tipo": red.tipo, "solicitante": red.solicitante, "fecha_inicio": red.fecha_inicio, "fecha_cierre": red.fecha_cierre, "porcentaje": red.porcentaje_avance, "horas_estimadas": red.horas_estimadas, "listo_revision": red.listo_para_revision, "version_id": version_id, "version_numero": version_numero})
+        respuesta = {
+            "redsAsignados": reds_asignados}
+        return JsonResponse(respuesta, safe=False)
