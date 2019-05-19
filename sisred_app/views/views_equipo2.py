@@ -53,15 +53,14 @@ def marcarVersion(request,id):
     
 def buscarRed(request):
 
-    token = request.META['HTTP_AUTHORIZATION']
-    token = token.replace('Token ', '')
-
     #verificar si el usuario esta logueado
     tokenStatus = getTokenStatus(request)
     if(not tokenStatus):
         return HttpResponseForbidden('Invalid Token')
 
     #traer el perfil del usuario que esta logueado
+    token = request.META['HTTP_AUTHORIZATION']
+    token = token.replace('Token ', '')
     userId = Token.objects.get(key=token).user.id
 
     if request.method == 'GET':
@@ -107,6 +106,11 @@ def getAsignaciones(request):
 
 @csrf_exempt
 def versiones(request):
+    #verificar si el usuario esta logueado
+    tokenStatus = getTokenStatus(request)
+    if(not tokenStatus):
+        return HttpResponseForbidden('Invalid Token')
+
     if request.method == 'POST':
         data = jsonUser = json.loads(request.body)
         es_final = False
@@ -227,13 +231,22 @@ def comentarioExistente(request,id_v, id_r):
 
 @csrf_exempt
 def comentarioNuevo(request,id_v, id_r):
+    tokenStatus = getTokenStatus(request)
+    if(not tokenStatus):
+        return HttpResponse('Invalid Token')
+
+    #traer el perfil del usuario que esta logueado
+    token = request.META['HTTP_AUTHORIZATION']
+    token = token.replace('Token ', '')
+    userId = Token.objects.get(key=token).user.id
+
     if request.method == 'POST':
         data = jsonUser = json.loads(request.body)
         version = get_object_or_404(Version, id=id_v)
         recurso = get_object_or_404(Recurso, id=id_r)
         contenido = data['contenido']
         fecha_creacion = datetime.date.today()
-        usuario=Perfil.objects.get(usuario__id=data['usuario'])
+        usuario=Perfil.objects.get(usuario__id=userId)
         x1=data['x1']
         x2=data['x2']
         y1=data['y1']

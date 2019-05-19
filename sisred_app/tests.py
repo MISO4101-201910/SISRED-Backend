@@ -374,6 +374,16 @@ class sisred_appTestCase(TestCase):
         self.assertEqual(reds[1]['id'], 3)
 
 class CrearVersion(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='test', password='sihdfnssejkhfse', email='test@test.com', first_name="fname",last_name="lname")
+        self.perfil = Perfil.objects.create(id_conectate='1', usuario=self.user, estado=1)
+        self.rol = Rol.objects.create(id_conectate='1', nombre='rolPrueba')
+        Token.objects.create(user=self.user)
+        token = Token.objects.get(user=self.user)
+        token.save()
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+
     def testCrearVersionHappyPath(self):
         fecha = datetime.datetime.now()
         userModel = User.objects.create_user(username="testImagen", password="testImagen", first_name="testImagen",
