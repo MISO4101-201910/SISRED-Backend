@@ -321,5 +321,24 @@ def get_versiones_revision(request, id):
         for rol in rolesAsignados:
             versiones = Version.objects.filter(red=rol.red)
             for ver in versiones:
-                respuesta.append({"versionId": ver.pk,"redId": rol.red.pk, "rol": rol.rol.nombre, "red": rol.red.nombre, "fecha": ver.date.strftime("%d/%m/%Y")})
+                respuesta.append({"versionId": ver.pk,"redId": rol.red.pk, "rol": rol.rol.nombre, "red": rol.red.nombre,
+                                  "fecha": ver.date.strftime("%d/%m/%Y")})
     return HttpResponse(json.dumps(respuesta), content_type="application/json")
+
+
+@csrf_exempt
+def get_comentarios(request,idRecurso):
+        if request.method == 'GET':
+            comentarios = Comentario.objects.filter(recurso=idRecurso)
+            respuesta = []
+            for com in comentarios:
+                perfil = Perfil.objects.get(pk=com.usuario_id)
+                usuario = User.objects.get(pk=perfil.usuario_id)
+                nombre = usuario.first_name + " " + usuario.last_name
+                respuesta.append(
+                    {"contenido": com.contenido, "recurso": com.recurso_id, "version": com.version_id,
+                     "usuario": nombre, "fecha": com.fecha_creacion.strftime("%d/%m/%Y %H:%M:%S")})
+            if len(comentarios) == 0:
+                return HttpResponse('no hay registros')
+
+            return HttpResponse(json.dumps(respuesta), content_type="application/json")
