@@ -22,5 +22,4 @@ sisred_app/views/__pycache__/
 __pycache__/
 
 .DS_Store
-/sisred_app/migrations/
 /sisred_app/.DS_Store
