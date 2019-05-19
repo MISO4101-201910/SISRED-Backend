@@ -16,6 +16,7 @@ import json
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import api_view, permission_classes
+from sisred_app.serializer import *
 
 @csrf_exempt
 def getProyectosRED(request):
@@ -95,53 +96,11 @@ def buscarRed(request):
         return JsonResponse(listOfReds,safe=False)
     return HttpResponseNotFound()
 
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ('username', 'first_name', 'last_name', 'email')
-
-
-class PerfilSerializer(serializers.ModelSerializer):
-    usuario = UserSerializer()
-    class Meta:
-        model = Perfil
-        fields = '__all__'
-
-
-class RedSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = RED
-        fields = '__all__'
-
-
-class RolSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Rol
-        fields = '__all__'
-
-
-class RolAsignadoSerializer(serializers.ModelSerializer):
-    red = RedSerializer()
-    usuario = PerfilSerializer()
-    rol = RolSerializer()
-    class Meta:
-        model = RolAsignado
-        fields = ('red', 'rol', 'usuario')
-
-class VersionSerializer(serializers.ModelSerializer):
-    creado_por = PerfilSerializer()
-    class Meta:
-        model = Version
-        fields= '__all__'
-
-
 @csrf_exempt
 def getAsignaciones(request):
     data = list(RolAsignado.objects.all())
     serializer = RolAsignadoSerializer(data, many=True)
     return JsonResponse({'context': serializer.data}, safe=True)
-
 
 @csrf_exempt
 def versiones(request):
@@ -156,30 +115,16 @@ def versiones(request):
         idRecursos = data['recursos']
 
         red = get_object_or_404(RED, id=redId)
-
         oldVersions = Version.objects.filter(red__id=redId)
-
         numero = 1
 
         if len(oldVersions) > 0:
             numero = max((v.numero for v in oldVersions)) + 1
 
-
         recursos = Recurso.objects.filter(id__in=idRecursos)
-
-
         creado_por=Perfil.objects.get(usuario__username=data['creado_por'])
 
-
-        version = Version.objects.create(
-            es_final=es_final,
-            imagen=imagen,
-            archivos=archivos,
-            red=red,
-            numero=numero,
-            creado_por=creado_por,
-            fecha_creacion=fecha_creacion,
-        )
+        version = createVersion(es_final, imagen, archivos, red, numero, creado_por, fecha_creacion)
 
         newrecursos=[]
         for i in recursos:
@@ -195,6 +140,18 @@ def versiones(request):
         return JsonResponse(serializer.data, safe=True)
     return HttpResponseNotFound()
 
+def createVersion(es_final, imagen, archivos, red, numero, creado_por, fecha_creacion):
+    version = Version.objects.create(
+        es_final=es_final,
+        imagen=imagen,
+        archivos=archivos,
+        red=red,
+        numero=numero,
+        creado_por=creado_por,
+        fecha_creacion=fecha_creacion,
+    )
+    return version
+
 @csrf_exempt
 def getRecursosRed(request, id):
     red = get_object_or_404(RED, id=id)
@@ -202,33 +159,12 @@ def getRecursosRed(request, id):
     serializer = RecursoSerializer(red.recursos, many=True)
     return JsonResponse({'context':serializer.data}, safe=True)
 
-
-class ProyectoSerializer_v(serializers.ModelSerializer):
-    class Meta:
-        model = ProyectoConectate
-        fields = ('nombre',)
-
-class RedSerializer_v(serializers.ModelSerializer):
-    proyecto_conectate = ProyectoSerializer_v()
-    class Meta:
-        model = RED
-        fields = ('nombre', 'proyecto_conectate')
-
-class VersionSerializer_v(serializers.ModelSerializer):
-    red = RedSerializer_v()
-    creado_por = PerfilSerializer()
-    class Meta:
-        model = Version
-        fields = '__all__'
-
-
 @csrf_exempt
 def getVerVersion(request, id):
     version = get_object_or_404(Version, id=id)
 
     serializer = VersionSerializer_v(version, many=False)
     return JsonResponse(serializer.data, safe=True)
-
 
 @csrf_exempt
 def getVerVersionR(request, id):
@@ -247,21 +183,6 @@ def getVersionesRED(request, id):
     data = Version.objects.filter(red=red).order_by('numero')
     serializer = VersionSerializer(data, many=True)
     return JsonResponse({'context': serializer.data}, safe=True)
-
-class ComentarioMultimediaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ComentarioMultimedia
-        fields = '__all__'
-
-class ComentarioSerializer(serializers.ModelSerializer):
-    version=VersionSerializer()
-    recurso=RecursoSerializer()
-    comentario_multimedia=ComentarioMultimediaSerializer()
-    usuario=PerfilSerializer()
-    class Meta:
-        model = Comentario
-        fields = '__all__'
-
 
 @csrf_exempt
 def comentarioExistente(request,id_v, id_r):
@@ -416,8 +337,6 @@ def getAllAsignados(request,redId):
 
     return JsonResponse(list(personasAsignadas), safe=False)
 
-
-
 def getTokenStatus(request):
     token = request.META['HTTP_AUTHORIZATION']
     token = token.replace('Token ', '')
@@ -446,12 +365,6 @@ def esActivo(red):
             return True
     
     return False
-    
-class ProyectoREDSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProyectoRED
-        fields= '__all__'
-
 
 #Obtiene la lista de Proyectos RED asociados al RED
 @csrf_exempt
