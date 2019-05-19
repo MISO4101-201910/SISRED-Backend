@@ -54,6 +54,7 @@ urlpatterns = [
     path('getRedDetailRecursos/<int:id>/', views_equipo4.getRedDetailRecursos, name='getRedDetailRecursos'),
     path('getUserAut/', views_equipo4.getUserAut, name='getUserAut'),
     path('getRolAsignadoRED/<int:id>/', views_equipo4.getRolAsignadoRED, name='getRolAsignadoRED'),
+    path('getRolAsignadoREDPorRecurso/<int:idRecurso>/<int:idUsuario>', views_equipo3.getRolAsignadoREDPorRecurso, name='getRolAsignadoREDPorRecurso'),
     path('update_sisred/', views_equipo4.update_sisred, name='update_sisred'),
     path('reds/', views_equipo4.get_red, name='reds'),
     path('sisred_create/', views_equipo4.sisred_create, name='sisred_create'),

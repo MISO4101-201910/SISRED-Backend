@@ -1,19 +1,26 @@
+from tokenize import Token
+
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 import json, decimal
 from django.http import JsonResponse
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.status import HTTP_400_BAD_REQUEST
+
 from sisred_app.models import RED, ProyectoRED, RolAsignado, Perfil, Metadata, Recurso, ProyectoConectate, Version, Comentario, ComentarioMultimedia, ComentarioVideo
 from django.http import HttpResponse
 from django.core import serializers
 from django.contrib.auth.models import User
-from datetime import datetime, timedelta
-
-from django.utils.formats import get_format
-from django.utils.dateparse import parse_date
+from rest_framework.authtoken.models import Token
+from rest_framework.response import Response
 
 # Create your views here.
 
 # Metodo para agregar un proyecto RED
+from sisred_app.serializer import RolAsignadoSerializer
+
+
 @csrf_exempt
 def post_proyecto_red(request):
     if request.method == 'POST':
@@ -354,3 +361,19 @@ def post_cerrar_comentario_video(request):
             esCierre=json_comentario_cierre['es_cierre'])
         comentario_cierre.save()
         return HttpResponse(serializers.serialize("json", [comentario_cierre]))
+
+
+@csrf_exempt
+@api_view(["GET"])
+@permission_classes((AllowAny,))
+def getRolAsignadoREDPorRecurso(request, idRecurso, idUsuario):
+        recurso = Recurso.objects.get(pk=idRecurso)
+        red = RED.objects.get(recursos__pk=idRecurso) #RED.objects.distinct().first().recursos.distinct().first()
+        idRed = red.pk
+        rol = RolAsignado.objects.filter(red=idRed).filter(usuario__pk=idUsuario)
+        print(rol)
+        if not rol:
+            return Response({'error': 'No autorizado'}, status=HTTP_400_BAD_REQUEST)
+        if request.method == 'GET':
+            serializer = RolAsignadoSerializer(rol, many=True)
+            return JsonResponse(serializer.data, safe=False)
