@@ -1427,3 +1427,64 @@ class VerAvance(TestCase):
         current_data = json.loads(response.content)
 
         self.assertEqual(current_data[0], "fname lname")
+
+class SubirRED(TestCase):
+    red=None
+    def test_notificacion(self):
+        fecha_inicio = datetime.datetime.strptime("2018-03-11", "%Y-%m-%d").date()
+        fecha_fin = datetime.datetime.strptime("2018-03-12", "%Y-%m-%d").date()
+        proyecto_conectate = ProyectoConectate.objects.create(id_conectate=1, nombre='prueba',
+                                                               codigo='prueba', fecha_inicio=fecha_inicio,
+                                                               fecha_fin=fecha_fin)
+
+        red = RED.objects.create(id_conectate=1, nombre='pruebaREDAlerta', descripcion='prueba',
+                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyecto_conectate)
+
+        rol = Rol.objects.create(id_conectate='1', nombre='nombreROL')
+        user_model = User.objects.create_user(
+            username='username', password='password')
+        user_model.first_name = 'first_name'
+        user_model.last_name = 'last_name'
+        user_model.email = 'email'
+        user_profile = Perfil.objects.create(usuario=user_model, id_conectate='1', numero_identificacion='1022',
+                                             estado=1)
+        RolAsignado.objects.create(id_conectate='1', estado=1, red=red, rol=rol,
+                                                  usuario=user_profile)
+        NotificacionTipo.objects.create(nombre='nombre1', descripcion='descripcion')
+        NotificacionTipo.objects.create(nombre='nombre2', descripcion='descripcion')
+        NotificacionTipo.objects.create(nombre='SUBIR_RED', descripcion='Se subió el RED')
+
+        url = '/api/'+str(red.id_conectate)+'/subirnotif'
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code,200)
+
+    def test_notificacion2(self):
+        fecha_inicio = datetime.datetime.strptime("2018-03-11", "%Y-%m-%d").date()
+        fecha_fin = datetime.datetime.strptime("2018-03-12", "%Y-%m-%d").date()
+        proyecto_conectate = ProyectoConectate.objects.create(id_conectate=1, nombre='prueba',
+                                                              codigo='prueba', fecha_inicio=fecha_inicio,
+                                                              fecha_fin=fecha_fin)
+
+        red = RED.objects.create(id_conectate=1, nombre='pruebaREDAlerta', descripcion='prueba',
+                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyecto_conectate)
+
+        rol = Rol.objects.create(id_conectate='1', nombre='nombreROL')
+        user_model = User.objects.create_user(
+            username='username', password='password')
+        user_model.first_name = 'first_name'
+        user_model.last_name = 'last_name'
+        user_model.email = 'email'
+        user_profile = Perfil.objects.create(usuario=user_model, id_conectate='1', numero_identificacion='1022',
+                                             estado=1)
+        RolAsignado.objects.create(id_conectate='1', estado=1, red=red, rol=rol,
+                                   usuario=user_profile)
+        NotificacionTipo.objects.create(nombre='nombre1', descripcion='descripcion')
+        NotificacionTipo.objects.create(nombre='nombre2', descripcion='descripcion')
+        NotificacionTipo.objects.create(nombre='SUBIR_RED', descripcion='Se subió el RED')
+
+        url = '/api/' + str(red.id_conectate) + '/subirnotif'
+
+        response = self.client.get(url)
+        data = json.loads(response.content)
+        self.assertEqual(data, {"mensaje": 'La notificacion ha sido creada'})

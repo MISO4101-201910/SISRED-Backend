@@ -2,20 +2,19 @@ from django.shortcuts import get_object_or_404,get_list_or_404
 from django.core import serializers
 from django.core.serializers import serialize
 from rest_framework import serializers
-from django.http import HttpResponse, JsonResponse, HttpResponseNotFound, Http404, HttpResponseForbidden
+from django.http import HttpResponse, JsonResponse, HttpResponseNotFound, Http404, HttpResponseForbidden, HttpResponseBadRequest
 from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
 from sisred_app.models import ProyectoRED, Recurso, RED, RolAsignado, Perfil, Rol, ProyectoConectate, Version, Comentario, ComentarioMultimedia, HistorialFases
 from django.contrib.auth.models import User
 from sisred_app.serializer import RecursoSerializer
-from rest_framework.authtoken.models import Token
-from rest_framework.permissions import AllowAny
-from rest_framework.decorators import api_view, permission_classes
 import datetime
 import json
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import api_view, permission_classes
+from .views_equipo4 import createNotification
+from rest_framework import status
 
 @csrf_exempt
 def getProyectosRED(request):
@@ -486,3 +485,15 @@ def getTokenStatus(request):
         tokenStatus = False
     
     return tokenStatus
+
+#Luego de subir RED se genera una notificación al proyecto
+def generarNotificacionSubirRed(request, id_conectate):
+    NotificacionSubirRed = 3
+    result = createNotification(str(id_conectate), NotificacionSubirRed)
+    print("notificacion", result)
+
+    if result != {"mensaje": 'La notificacion ha sido creada'}:
+        error = 'No fue posible crear la notificacion'
+        return HttpResponseBadRequest(content=error, status=status.HTTP_400_BAD_REQUEST)
+
+    return HttpResponse(json.dumps(result))

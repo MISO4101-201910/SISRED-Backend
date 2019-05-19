@@ -42,6 +42,7 @@ urlpatterns = [
     path('proyectoConectate/<int:idProyecto>/verAvance', views_equipo2.verAvanceProyectoConectate, name='verAvanceProyectoConectate'),
     path('reds/<int:id>/proyectored/', views_equipo2.getListaProyectosred, name='getListaProyectosred'),
     path('red/<int:redId>/historicoAsignados', views_equipo2.getAllAsignados, name='getAllAsignados'),
+    path('<int:id_conectate>/subirnotif', views_equipo2.generarNotificacionSubirRed, name='generarNotificacionSubirRed'),
 
     path('users/', views_equipo4.getAllUser, name='allUsers'),
     path('users/<int:id>/', views_equipo4.getUser, name='getUserId'),
