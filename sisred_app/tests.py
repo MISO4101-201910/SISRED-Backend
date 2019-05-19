@@ -1267,3 +1267,28 @@ class RR03_1TestCase(TestCase):
         current_data = json.loads(response.content)
 
         self.assertEqual(current_data[0]['contenido'], 'Comentario de prueba')
+
+    def test_post_comment(self):
+        fecha_inicio = datetime.datetime.now()
+        fecha_fin = datetime.datetime.now()
+        proyectto_conectate = ProyectoConectate.objects.create(id_conectate='1', nombre='prueba',
+                                                               codigo='prueba', fecha_inicio=fecha_inicio,
+                                                               fecha_fin=fecha_fin)
+        red = RED.objects.create(id_conectate='1', nombre='pruebaRED', descripcion='prueba',
+                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyectto_conectate)
+        version = Version.objects.create(numero=1, imagen='prueba', red=red, id=1)
+        user_model = User.objects.create_user(username='user1', password='1234ABC*', first_name='Usuario',
+                                              last_name='uno', email='user1@coquito.com')
+        perfil = Perfil.objects.create(id_conectate='1', usuario=user_model, estado=1)
+        recurso = version.recursos.create(nombre='prueba', archivo='prueba', thumbnail='prueba', fecha_creacion=fecha_inicio,
+                                          fecha_ultima_modificacion=fecha_inicio, tipo='prueba', descripcion='prueba',
+                                          autor=perfil, usuario_ultima_modificacion=perfil)
+
+        response = self.client.post('/api/post_comment/', json.dumps({"contenido": "Contenido de prueba", "recurso_id": recurso.pk,"usuario_id": perfil.id_conectate,"version_id": version.pk}),
+                                    content_type='application/json')
+        current_data = json.loads(response.content)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(recurso.pk, current_data[0]['fields']['recurso'])
+        self.assertEqual(perfil.pk, current_data[0]['fields']['usuario'])
+        self.assertEqual(version.pk, current_data[0]['fields']['version'])
+        self.assertEqual('Contenido de prueba', current_data[0]['fields']['contenido'])
