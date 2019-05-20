@@ -527,6 +527,8 @@ Return: Un mensaje de confirmación
 
 @csrf_exempt
 def postRolAsignado(request):
+    NotificacionRolAsignado = 1
+
     if request.method == 'POST':
         error = ''
         try:
@@ -550,7 +552,7 @@ def postRolAsignado(request):
                             rol_asignado = RolAsignado.objects.create(id_conectate=id_conectate, estado=1, red=red,
                                                                       rol=rol, usuario=perfil)
 
-                            result = createNotification(id_red, 1)  # para crear la notificacion
+                            result = createNotification(id_red, NotificacionRolAsignado)  # para crear la notificacion
                             print("notificacion",result)
 
                             if result != {"mensaje": 'La notificacion ha sido creada'}:
@@ -686,6 +688,8 @@ Parametros: request, id del red, id de la fase'''
 
 @csrf_exempt
 def putCambiarFaseRed(request, idRed, idFase):
+    NotificacionCambiarFase = 2#para la creacion de la notificacion
+
     if request.method == 'PUT':
         try:
             red = RED.objects.get(id_conectate=idRed)
@@ -693,25 +697,33 @@ def putCambiarFaseRed(request, idRed, idFase):
 
             idActual = int(red.fase.id_conectate)
 
-            print("putCambiarFaseRed", idActual, idFase)
-            if (idFase > (idActual + 1)) | (idFase < (idActual - 1)):
-                error = 'Debe seleccionar una fase consecutiva para poder hacer el cambio'
+            json_data = json.loads(request.body)
+            comentario = json_data['comentario']
+
+            print("putCambiarFaseRed", idActual, idFase,comentario)
+
+            if comentario==None:
+                error = 'La actualizacion viene sin comentario'
                 return HttpResponseBadRequest(content=error, status=HTTP_400_BAD_REQUEST)
+
+            if idFase < idActual:
+                if (idFase!= 2) | (idActual!=3): # se valida para que permita retroceder solo a la fase de post-produccion
+                    error = 'Debe seleccionar una fase superior para poder hacer el cambio'
+                    return HttpResponseBadRequest(content=error, status=HTTP_400_BAD_REQUEST)
 
             red.fase = fase
             red.save()
 
-            # Llamado a la funcion de sincronizarFases
-            sincronizarFases(idRed, idActual, idFase)
+            sincronizarFases(idRed, idActual, idFase) # Llamado a la funcion de sincronizarFases
 
-            result = createNotification(idRed, 2)  # para crear la notificacion
+            result = createNotification(idRed, NotificacionCambiarFase)  # para crear la notificacion
             print("notificacion:", result)
 
             if result != {"mensaje": 'La notificacion ha sido creada'}:
                 error = 'No fue posible crear la notificacion'
                 return HttpResponseBadRequest(content=error, status=HTTP_400_BAD_REQUEST)
 
-            historialFase = HistorialFases.objects.create(fecha_cambio=datetime.now(), fase=fase, red=red)
+            historialFase = HistorialFases.objects.create(fecha_cambio=datetime.now(), fase=fase, red=red, comentario=comentario)
             historialFase.save()
 
             return HttpResponse(status=HTTP_200_OK)
@@ -1028,6 +1040,7 @@ def createNotification(id_red, id_notificationtype):
         if red != None:
             print("red", red.nombre, id_notificationtype, id_red)
             rol_asignado = RolAsignado.objects.filter(red=red)
+            print("rolAsignado", rol_asignado.count())
 
             if rol_asignado:
 
@@ -1048,10 +1061,10 @@ def createNotification(id_red, id_notificationtype):
                 mensaje = {"mensaje": 'La notificacion ha sido creada'}
                 return mensaje
             else:
-                error = {"error": 'No hay un ROL asignado al RED' + id_red}
+                error = {"error": 'No hay un ROL asignado al RED ' + str(id_red)}
                 return error
         else:
-            error = {"error": 'No hay un RED con el id ' + id_red}
+            error = {"error": 'No hay un RED con el id ' + str(id_red)}
             return error
 
     except Exception as ex:
