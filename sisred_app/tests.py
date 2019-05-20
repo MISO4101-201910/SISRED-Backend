@@ -1009,13 +1009,13 @@ class sisRedTestCase(TestCase):
         fecha_desde = "2019-01-01"
         fecha_hasta = "2019-02-28"
 
-        url = f'/api/buscarRecurso/?name={buscarNombre}&fdesde={fecha_desde}&fhasta={fecha_hasta}'
+        url = f'/api/buscarRecurso/?&fdesde={fecha_desde}&fhasta={fecha_hasta}'
 
         response = self.client.get(url, format='json')
         recursos = json.loads(response.content)
-
+        current_data = recursos['context']
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(recursos), 2)
+        self.assertEqual(len(current_data), 2)
 
     def test_list_notificaciones_un_usuario(self):
         user = User.objects.create(username='user1', password='1234ABC', first_name='nombre1',

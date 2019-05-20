@@ -913,25 +913,30 @@ def buscar_recurso(request):
             for word in words:
                 recursos += q.filter(Q(nombre__contains=word) | Q(descripcion__contains=word) | Q(metadata__tag__contains=word))
 
-            print(recursos)
             serializer = RecursoSerializer(recursos, many=True)
             return JsonResponse({'context': serializer.data}, safe=True)
 
         if name:
+            print('entro filtro 1')
             validaFiltro=1
             name = name.lower()
             q = q.filter(Q(nombre__contains=name))
 
         if fechaDesde and not fechaHasta:
+            print('entro filtro 2')
             validaFiltro = 1
             q = q.filter(Q(fecha_creacion__exact=fechaDesde))
 
         if fechaDesde and fechaHasta:
+            print('entro filtro 3')
+            print(fechaDesde)
+            print(fechaHasta)
             validaFiltro = 1
             q = q.filter(Q(fecha_creacion__gte=fechaDesde),Q(fecha_creacion__lte=fechaHasta))
 
         if tag:
             validaFiltro = 1
+            print('entro filtro 4')
             tag = tag.lower()
             q = q.filter(Q(metadata__tag__contains=tag))
 
