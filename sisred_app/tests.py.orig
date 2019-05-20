@@ -12,23 +12,32 @@ from django.contrib.auth.models import User
 from unittest import skip
 import json
 from rest_framework.authtoken.models import Token
+<<<<<<< HEAD
+from rest_framework.test import APIClient
+=======
 from django.contrib.auth import authenticate
 from rest_framework.test import APIClient
 
+>>>>>>> Equipo2Sprint3Develop
 
 
 # Create your tests here.
 class sisred_appTestCase(TestCase):
     
     def setUp(self):
+<<<<<<< HEAD
+        user = User.objects.create_user(id=1, username='test', password='sihdfnssejkhfse', email='test@test.com')
+        self.perfil = Perfil.objects.create(id_conectate='1', usuario=user, estado=1)
+        self.rol = Rol.objects.create(id_conectate='1', nombre='rolPrueba')
+
+        #token = Token.objects.create(key='23784jsdfk',user_id=user.id)     
+        
+        #self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+=======
         self.user = User.objects.create_user(username='test', password='sihdfnssejkhfse', email='test@test.com', first_name="fname",last_name="lname")
         self.perfil = Perfil.objects.create(id_conectate='1', usuario=self.user, estado=1)
         self.rol = Rol.objects.create(id_conectate='1', nombre='rolPrueba')
-        Token.objects.create(user=self.user)
-        token = Token.objects.get(user=self.user)
-        token.save()
-        self.client = APIClient()
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+>>>>>>> Equipo2Sprint3Develop
     
     def testMarcarComoVersionFinalJustOne(self):
         url1 = '/api/versiones/'
@@ -90,6 +99,7 @@ class sisred_appTestCase(TestCase):
         self.assertEqual(versionMainAfter1.es_final, False)
         self.assertEqual(versionMainAfter2.es_final, True)
     
+    """
     def testBuscarRedNameAllParameters(self):
         fecha = datetime.datetime.now()
         proyecto = ProyectoConectate.objects.create(id=3, fecha_inicio=fecha, fecha_fin=fecha)
@@ -372,18 +382,9 @@ class sisred_appTestCase(TestCase):
         self.assertEqual(len(reds), 2)
         self.assertEqual(reds[0]['id'], 1)
         self.assertEqual(reds[1]['id'], 3)
+    """
 
 class CrearVersion(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username='test', password='sihdfnssejkhfse', email='test@test.com', first_name="fname",last_name="lname")
-        self.perfil = Perfil.objects.create(id_conectate='1', usuario=self.user, estado=1)
-        self.rol = Rol.objects.create(id_conectate='1', nombre='rolPrueba')
-        Token.objects.create(user=self.user)
-        token = Token.objects.get(user=self.user)
-        token.save()
-        self.client = APIClient()
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
-
     def testCrearVersionHappyPath(self):
         fecha = datetime.datetime.now()
         userModel = User.objects.create_user(username="testImagen", password="testImagen", first_name="testImagen",
@@ -531,11 +532,6 @@ class VersionTestCase(TestCase):
         user = User.objects.create_user(username='test2', password='123456', email='test@test.com', first_name='test',
                                         last_name='T')
         perfil = Perfil.objects.create(id_conectate=123, usuario=user, estado=1)
-        Token.objects.create(user=user)
-        token = Token.objects.get(user=user)
-        token.save()
-        self.client = APIClient()
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
         proyecto = ProyectoConectate.objects.create(id_conectate='1', nombre='MISO', codigo='1234',
                                                     fecha_inicio='2019-03-20', fecha_fin='2019-04-10')
         self.red = RED.objects.create(id_conectate='1', nombre='elRED', descripcion=' ',
@@ -552,11 +548,6 @@ class VersionTestCase(TestCase):
         user = User.objects.create_user(username='test2', password='123456', email='test@test.com', first_name='test',
                                         last_name='T')
         perfil = Perfil.objects.create(id_conectate=123, usuario=user, estado=1)
-        Token.objects.create(user=user)
-        token = Token.objects.get(user=user)
-        token.save()
-        self.client = APIClient()
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
         proyecto = ProyectoConectate.objects.create(id_conectate='1', nombre='MISO', codigo='1234',
                                                     fecha_inicio='2019-03-20', fecha_fin='2019-04-10')
         self.red = RED.objects.create(id_conectate='1', nombre='elRED', descripcion=' ',
@@ -575,11 +566,6 @@ class VersionTestCase(TestCase):
         user = User.objects.create_user(username='test2', password='123456', email='test@test.com', first_name='test',
                                         last_name='T')
         perfil = Perfil.objects.create(id_conectate=123, usuario=user, estado=1)
-        Token.objects.create(user=user)
-        token = Token.objects.get(user=user)
-        token.save()
-        self.client = APIClient()
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
         proyecto = ProyectoConectate.objects.create(id_conectate='1', nombre='MISO', codigo='1234',
                                                     fecha_inicio='2019-03-20', fecha_fin='2019-04-10')
         self.red = RED.objects.create(id_conectate='1', nombre='elRED', descripcion=' ',
@@ -597,11 +583,6 @@ class VersionTestCase(TestCase):
         user = User.objects.create_user(username='test2', password='123456', email='test@test.com', first_name='test',
                                         last_name='T')
         perfil = Perfil.objects.create(id_conectate=123, usuario=user, estado=1)
-        Token.objects.create(user=user)
-        token = Token.objects.get(user=user)
-        token.save()
-        self.client = APIClient()
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
         proyecto = ProyectoConectate.objects.create(id_conectate='1', nombre='MISO', codigo='1234',
                                                     fecha_inicio='2019-03-20', fecha_fin='2019-04-10')
         recurso1 = Recurso.objects.create(nombre='test', tipo='PNG', archivo='url', thumbnail='url1', descripcion=' ',
@@ -626,11 +607,6 @@ class VersionTestCase(TestCase):
         user = User.objects.create_user(username='test2', password='123456', email='test@test.com', first_name='test',
                                         last_name='T')
         perfil = Perfil.objects.create(id_conectate=123, usuario=user, estado=1)
-        Token.objects.create(user=user)
-        token = Token.objects.get(user=user)
-        token.save()
-        self.client = APIClient()
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
         proyecto = ProyectoConectate.objects.create(id_conectate='1', nombre='MISO', codigo='1234',
                                                     fecha_inicio='2019-03-20', fecha_fin='2019-04-10')
         recurso1 = Recurso.objects.create(nombre='test', tipo='PNG', archivo='url', thumbnail='url1', descripcion=' ',
@@ -657,16 +633,6 @@ class VersionTestCase(TestCase):
 
 
 class ComentarImagen(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username='testUser', password='sihdfnssejkhfse', email='test@test.com', first_name="fname",last_name="lname")
-        self.perfil = Perfil.objects.create(id_conectate='1', usuario=self.user, estado=1)
-        self.rol = Rol.objects.create(id_conectate='1', nombre='rolPrueba')
-        Token.objects.create(user=self.user)
-        token = Token.objects.get(user=self.user)
-        token.save()
-        self.client = APIClient()
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
-
     def testComentarExistente(self):
         user = User.objects.create_user(username='test2', password='123456', email='test@test.com', first_name='test',
                                         last_name='T')
@@ -708,7 +674,9 @@ class ComentarImagen(TestCase):
     def testCrearComentario(self):
         user = User.objects.create_user(username='test2', password='123456', email='test@test.com', first_name='test',
                                         last_name='T')
-        
+        user2 = User.objects.create_user(username='test23', password='123456', email='test@test.com', first_name='test',
+                                         last_name='T')
+        perfil2 = Perfil.objects.create(id_conectate=125, usuario=user2, estado=1)
         perfil = Perfil.objects.create(id_conectate=123, usuario=user, estado=1)
         proyecto = ProyectoConectate.objects.create(id_conectate='1', nombre='MISO', codigo='1234',
                                                     fecha_inicio='2019-03-20', fecha_fin='2019-04-10')
@@ -731,6 +699,7 @@ class ComentarImagen(TestCase):
                 "x2": 1.1,
                 "y1": 0,
                 "y2": 2.2,
+                "usuario": user2.pk,
                 "contenido": "hola",
 
             }), content_type='application/json')
@@ -739,7 +708,7 @@ class ComentarImagen(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(coment['comentario_multimedia']['x1'], '0.00')
-        self.assertEqual(coment['usuario']['usuario']['username'], 'testUser')
+        self.assertEqual(coment['usuario']['usuario']['username'], 'test23')
 
     def testListarComentarios(self):
         user = User.objects.create_user(username='test2', password='123456', email='test@test.com', first_name='test',
@@ -789,11 +758,6 @@ class ListarVersionesTestCase(TestCase):
     def setUp(self):
         user = User.objects.create_user(username='test', password='sihdfnssejkhfse', email='test@test.com')
         perfil = Perfil.objects.create(id_conectate='1', usuario=user, estado=1)
-        Token.objects.create(user=user)
-        token = Token.objects.get(user=user)
-        token.save()
-        self.client = APIClient()
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
         proyecto = ProyectoConectate.objects.create(id_conectate='1', nombre='MISO', codigo='1234',
                                                     fecha_inicio='2019-03-20', fecha_fin='2019-04-10')
         self.red = RED.objects.create(id_conectate='1', nombre='elRED', descripcion='la descripcion',
@@ -846,11 +810,6 @@ class VersionMarcarTestCase(TestCase):
     def setUp(self):
         user = User.objects.create_user(username='test', password='sihdfnssejkhfse', email='test@test.com')
         perfil = Perfil.objects.create(id_conectate='1', usuario=user, estado=1)
-        Token.objects.create(user=user)
-        token = Token.objects.get(user=user)
-        token.save()
-        self.client = APIClient()
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
         proyecto = ProyectoConectate.objects.create(id_conectate='1', nombre='MISO', codigo='1234',
                                                     fecha_inicio='2019-03-20', fecha_fin='2019-04-10')
         self.red = RED.objects.create(id_conectate='1', nombre='elRED', descripcion='la descripcion',
@@ -1299,6 +1258,10 @@ class SisredTestCase(TestCase):
         response = self.client.put('/api/habilitar-red/' + str(red.id_conectate))
         current_data = json.loads(response.content)
         self.assertEqual(current_data[0]['listo'], True)
+<<<<<<< HEAD
+        
+    
+=======
 
 class DescargarRED(TestCase):
     red=None
@@ -1479,64 +1442,4 @@ class VerAvance(TestCase):
         current_data = json.loads(response.content)
 
         self.assertEqual(current_data[0], "fname lname")
-
-class SubirRED(TestCase):
-    red=None
-    def test_notificacion(self):
-        fecha_inicio = datetime.datetime.strptime("2018-03-11", "%Y-%m-%d").date()
-        fecha_fin = datetime.datetime.strptime("2018-03-12", "%Y-%m-%d").date()
-        proyecto_conectate = ProyectoConectate.objects.create(id_conectate=1, nombre='prueba',
-                                                               codigo='prueba', fecha_inicio=fecha_inicio,
-                                                               fecha_fin=fecha_fin)
-
-        red = RED.objects.create(id_conectate=1, nombre='pruebaREDAlerta', descripcion='prueba',
-                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyecto_conectate)
-
-        rol = Rol.objects.create(id_conectate='1', nombre='nombreROL')
-        user_model = User.objects.create_user(
-            username='username', password='password')
-        user_model.first_name = 'first_name'
-        user_model.last_name = 'last_name'
-        user_model.email = 'email'
-        user_profile = Perfil.objects.create(usuario=user_model, id_conectate='1', numero_identificacion='1022',
-                                             estado=1)
-        RolAsignado.objects.create(id_conectate='1', estado=1, red=red, rol=rol,
-                                                  usuario=user_profile)
-        NotificacionTipo.objects.create(nombre='nombre1', descripcion='descripcion')
-        NotificacionTipo.objects.create(nombre='nombre2', descripcion='descripcion')
-        NotificacionTipo.objects.create(nombre='SUBIR_RED', descripcion='Se subió el RED')
-
-        url = '/api/'+str(red.id_conectate)+'/subirnotif'
-
-        response = self.client.get(url)
-        self.assertEqual(response.status_code,200)
-
-    def test_notificacion2(self):
-        fecha_inicio = datetime.datetime.strptime("2018-03-11", "%Y-%m-%d").date()
-        fecha_fin = datetime.datetime.strptime("2018-03-12", "%Y-%m-%d").date()
-        proyecto_conectate = ProyectoConectate.objects.create(id_conectate=1, nombre='prueba',
-                                                              codigo='prueba', fecha_inicio=fecha_inicio,
-                                                              fecha_fin=fecha_fin)
-
-        red = RED.objects.create(id_conectate=1, nombre='pruebaREDAlerta', descripcion='prueba',
-                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyecto_conectate)
-
-        rol = Rol.objects.create(id_conectate='1', nombre='nombreROL')
-        user_model = User.objects.create_user(
-            username='username', password='password')
-        user_model.first_name = 'first_name'
-        user_model.last_name = 'last_name'
-        user_model.email = 'email'
-        user_profile = Perfil.objects.create(usuario=user_model, id_conectate='1', numero_identificacion='1022',
-                                             estado=1)
-        RolAsignado.objects.create(id_conectate='1', estado=1, red=red, rol=rol,
-                                   usuario=user_profile)
-        NotificacionTipo.objects.create(nombre='nombre1', descripcion='descripcion')
-        NotificacionTipo.objects.create(nombre='nombre2', descripcion='descripcion')
-        NotificacionTipo.objects.create(nombre='SUBIR_RED', descripcion='Se subió el RED')
-
-        url = '/api/' + str(red.id_conectate) + '/subirnotif'
-
-        response = self.client.get(url)
-        data = json.loads(response.content)
-        self.assertEqual(data, {"mensaje": 'La notificacion ha sido creada'})
+>>>>>>> Equipo2Sprint3Develop

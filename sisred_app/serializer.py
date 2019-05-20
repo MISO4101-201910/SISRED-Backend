@@ -74,3 +74,75 @@ class RolAsignadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = RolAsignado
         fields = ('rol',)
+
+class ProyectoSerializer_v(serializers.ModelSerializer):
+    class Meta:
+        model = ProyectoConectate
+        fields = ('nombre',)
+
+class RedSerializer_v(serializers.ModelSerializer):
+    proyecto_conectate = ProyectoSerializer_v()
+    class Meta:
+        model = RED
+        fields = ('nombre', 'proyecto_conectate')
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name', 'email')
+
+class PerfilSerializer(serializers.ModelSerializer):
+    usuario = UserSerializer()
+    class Meta:
+        model = Perfil
+        fields = '__all__'
+
+class VersionSerializer_v(serializers.ModelSerializer):
+    red = RedSerializer_v()
+    creado_por = PerfilSerializer()
+    class Meta:
+        model = Version
+        fields = '__all__'
+
+class RedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RED
+        fields = '__all__'
+
+class RolSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rol
+        fields = '__all__'
+
+class RolAsignadoSerializer(serializers.ModelSerializer):
+    red = RedSerializer()
+    usuario = PerfilSerializer()
+    rol = RolSerializer()
+    class Meta:
+        model = RolAsignado
+        fields = ('red', 'rol', 'usuario')
+
+class VersionSerializer(serializers.ModelSerializer):
+    creado_por = PerfilSerializer()
+    class Meta:
+        model = Version
+        fields= '__all__'
+
+class ComentarioMultimediaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ComentarioMultimedia
+        fields = '__all__'
+
+class ComentarioSerializer(serializers.ModelSerializer):
+    version=VersionSerializer()
+    recurso=RecursoSerializer()
+    comentario_multimedia=ComentarioMultimediaSerializer()
+    usuario=PerfilSerializer()
+    class Meta:
+        model = Comentario
+        fields = '__all__'
+
+class ProyectoREDSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProyectoRED
+        fields= '__all__'
