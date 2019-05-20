@@ -202,6 +202,10 @@ def getVersionesRED(request, id):
 
 @csrf_exempt
 def comentarioExistente(request,id_v, id_r):
+    tokenStatus = getTokenStatus(request)
+    if(not tokenStatus):
+        return HttpResponse('Invalid Token')
+
     if request.method == 'POST':
         data = jsonUser = json.loads(request.body)
         version = get_object_or_404(Version, id=id_v)
@@ -272,6 +276,9 @@ def comentarioNuevo(request,id_v, id_r):
 
 @csrf_exempt
 def getListaComentarios(request,id_v, id_r):
+    tokenStatus = getTokenStatus(request)
+    if(not tokenStatus):
+        return HttpResponse('Invalid Token')
 
     version = get_object_or_404(Version, id=id_v)
     recurso = get_object_or_404(Recurso, id=id_r)
