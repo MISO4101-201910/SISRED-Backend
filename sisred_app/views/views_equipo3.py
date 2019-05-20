@@ -161,6 +161,7 @@ def get_comentarios_video(request, id):
                 output_dict = [x for x in comentEsp if x['cerrado']]
                 if len(output_dict) > 0:
                     comentEsp[0]['cerrado'] = True
+                    comentEsp[0]['resuelto'] = output_dict[0]['resuelto']
                     cont = cont + len(output_dict)
                 respuesta.append({"id": multimedia.pk, "range": rangeEsp, "shape": shape, "comments": comentEsp,
                                   "abiertos":0, "cerrados":0})
