@@ -1608,6 +1608,7 @@ class verAvanceTestCase(TestCase):
 
         self.assertEqual(current_data['fases'][0]['comentario'], historial2.comentario)
         self.assertEqual(current_data['fases'][1]['comentario'], historial1.comentario)
+
     def testMarcarComoVersionListaJustOne(self):
         url1 = '/api/version-lista/'
         url2 = '/marcar'
@@ -1625,6 +1626,7 @@ class verAvanceTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(versionMainAfter.es_lista, True)
+
     def testMarcarComoVersionListoFirstMark(self):
         url1 = '/api/version-lista/'
         url2 = '/marcar'

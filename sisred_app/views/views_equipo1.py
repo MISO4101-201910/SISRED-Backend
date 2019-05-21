@@ -19,7 +19,7 @@ import requests
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
 from sisred_app.models import Recurso, RED, Perfil, Fase, HistorialFases, Version, Comentario, ComentarioMultimedia, ProyectoConectate
 from sisred_app.serializer import RecursoSerializer, RecursoSerializer_post, RecursoSerializer_put, \
-    REDSerializer, ComentarioCierreSerializer, comentariosHijosSerializer, ComentariosPDFSerializer
+    REDSerializer, ComentarioCierreSerializer, comentariosHijosSerializer, ComentariosPDFSerializer, VersionSerializer
 
 
 #Autor: Francisco Perneth
