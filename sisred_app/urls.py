@@ -4,12 +4,17 @@ from sisred_app.views import  views_equipo1,views_equipo2,views_equipo3,views_eq
 urlpatterns = [
 
     #path('recurso_list/', views_equipo1.recurso_list, name='recurso_list'),
-    path('recurso_get/<int:id>', views_equipo1.recurso_get, name='recurso_get'),
+    path('recurso_get/<int:pk>', views_equipo1.recurso_get, name='recurso_get'),
     path('recurso_put/', views_equipo1.recurso_put, name='recurso_put'),
     path('recurso_post/', views_equipo1.recurso_post, name='recurso_post'),
-    path('fase_byid/<int:id>', views_equipo1.fase_byid, name='fase_byid'),
+    path('fase_byid/<int:pk>', views_equipo1.fase_byid, name='fase_byid'),
     path('habilitar-usuario/<str:numero_identificacion>', views_equipo1.getUserByIdentification, name='habilitar-usuario'),
     path('habilitar-red/<str:id_conectate>', views_equipo1.getREDByIdentification, name='habilitar-red'),
+    path('comentario-cierre/', views_equipo1.comentario_cierre_post, name='comentario-cierre'),
+    path('comentario-cierre/base/<int:pk>', views_equipo1.comentario_cierre_put, name='comentario-cierre-put'),
+    path('comentario-base/<int:pk>', views_equipo1.comentario_base_get, name='comentario-base'),
+    path('comentario-pdf/<int:pk>/', views_equipo1.comentario_pdf_get, name='comentario_pdf_get'),
+    path('comentario-pdf/', views_equipo1.comentario_pdf_post, name='comentario-pdf-post'),
 
     path('post_proyecto_red/', views_equipo3.post_proyecto_red, name='agregar_proyecto_red'),
     path('detallered/', views_equipo3.get_detallered, name='detallered'),
@@ -67,5 +72,6 @@ urlpatterns = [
     path('buscarRecurso/', views_equipo4.buscar_recurso, name='recursos'),
     path('notificaciones/<int:idUsuario>/', views_equipo4.getNotificacionesPorUsuario, name='getNotificacionesPorUsuario'),
     path('notificaciones/<int:idUsuario>/novistos/', views_equipo4.getNotificacionesNoVistosPorUsuario, name='getNotificacionesNoVistosPorUsuario'),
-    path('putNotification/<int:id_notification>/', views_equipo4.putNotification, name='putNotification')
+    path('putNotification/<int:id_notification>/', views_equipo4.putNotification, name='putNotification'),
+
 ]
