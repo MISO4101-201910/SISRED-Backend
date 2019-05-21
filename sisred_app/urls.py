@@ -15,6 +15,7 @@ urlpatterns = [
     path('comentario-base/<int:pk>', views_equipo1.comentario_base_get, name='comentario-base'),
     path('comentario-pdf/<int:pk>/', views_equipo1.comentario_pdf_get, name='comentario_pdf_get'),
     path('comentario-pdf/', views_equipo1.comentario_pdf_post, name='comentario-pdf-post'),
+    path('getAvanceRED/<int:idRED>', views_equipo1.getAvanceRED, name='get_avance_red'),
 
     path('post_proyecto_red/', views_equipo3.post_proyecto_red, name='agregar_proyecto_red'),
     path('detallered/', views_equipo3.get_detallered, name='detallered'),
@@ -39,6 +40,7 @@ urlpatterns = [
     path('versiones/<int:id>/recursos/', views_equipo2.getVerVersionR),
     path('reds/<int:id>/versiones/', views_equipo2.getVersionesRED),
     path('versiones/<int:id>/marcar', views_equipo2.marcarVersion, name='marcarVersion'),
+    path('version-lista/<int:id>/marcar', views_equipo1.marcarVersionLista, name='marcarVersion'),
     path('buscarReds/<int:idUsuario>/', views_equipo2.buscarRed, name='reds'),
     path('versiones/', views_equipo2.versiones, name='versiones'),
     path('versiones/<int:id_v>/recursos/<int:id_r>/comentarios/', views_equipo2.comentarioExistente, name='comentarioExistente'),

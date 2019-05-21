@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 from django.db.models.query import QuerySet
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseBadRequest, HttpResponse, JsonResponse, HttpResponseNotFound
+from django.http import HttpResponseBadRequest, HttpResponse, JsonResponse, HttpResponseNotFound
+from django.shortcuts import get_object_or_404, get_list_or_404
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import  status
 from rest_framework.decorators import api_view
@@ -15,7 +17,7 @@ import datetime
 import requests
 
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
-from sisred_app.models import Recurso, RED, Perfil, Fase, HistorialFases, Version, Comentario, ComentarioMultimedia
+from sisred_app.models import Recurso, RED, Perfil, Fase, HistorialFases, Version, Comentario, ComentarioMultimedia, ProyectoConectate
 from sisred_app.serializer import RecursoSerializer, RecursoSerializer_post, RecursoSerializer_put, \
     REDSerializer, ComentarioCierreSerializer, comentariosHijosSerializer, ComentariosPDFSerializer
 
@@ -361,3 +363,61 @@ def comentario_pdf_post(request):
 
         return JsonResponse(serializer.data, safe=True)
     return HttpResponseNotFound()
+#Autor:         Ramiro Vargas
+#Fecha:         2019-05-13
+#Parametros:    idVersion -> Id dVersion PyS
+
+#Descripcion:   Funcionalidad para marcar version
+@csrf_exempt
+def marcarVersionLista(request,id):
+    if request.method == 'POST':
+        version = get_object_or_404(Version, id=id)
+
+        otherVersions = get_list_or_404(Version, red_id = version.red_id)
+        for v in otherVersions:
+            v.es_lista=False
+            v.save()
+
+        version.es_lista = True
+        version.save()
+        return JsonResponse(str(id), safe=False)
+    return HttpResponseNotFound()
+#Autor:         Alejandro Garcia
+#Fecha:         2019-05-08
+#Parametros:    idRed -> Id del RED
+#Descripcion:   Funcionalidad para obtener el avance de un  RED
+
+@api_view(['GET','PUT'])
+def getAvanceRED(request, idRED):
+    fases=[]
+    lista_fases=[]
+    recursos = []
+
+    if request.method == 'GET':
+        try:
+            red = RED.objects.get(id=idRED)
+            fecha = red.fecha_inicio
+            primera_fecha = True
+            proyecto_conectate = ProyectoConectate.objects.get(id=red.proyecto_conectate.id)
+        except RED.DoesNotExist:
+            raise NotFound(detail="Error 404, RED not found", code=404)
+
+        lista_fases = HistorialFases.objects.filter(red=idRED)
+        lista_fases.order_by('fecha_cambio')
+        recursos = red.recursos.all()
+        recursos.order_by('-fecha_creacion')
+        ultimoRecurso = recursos[0]
+        uhmodificacion = ultimoRecurso.fecha_creacion
+        tamaño = lista_fases.__len__()
+        count = 0
+        for fase in lista_fases:
+            fs = Fase.objects.get(id=fase.id)
+            fecha_final = "null"
+            fecha_inicial = fase.fecha_cambio
+            if(count+1<tamaño):
+                fecha_final = lista_fases[count+1].fecha_cambio
+            fases.append({"fase": fs.nombre_fase, "fechaInicio": fecha_inicial, "fechaFinal": fecha_final, "comentario": fase.comentario})
+            count=count+1
+
+        jsonObject ={"id": red.id,"nombre": red.nombre, "proyecto": proyecto_conectate.nombre, "uhmodificacion": uhmodificacion, "fases":fases}
+        return Response(jsonObject)

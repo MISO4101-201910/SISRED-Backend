@@ -9,7 +9,7 @@ import json
 from django.forms.models import model_to_dict
 from sisred_app.views.views_equipo4 import createNotification
 from .models import User, Perfil, RED, Fase, ProyectoConectate, Recurso, NotificacionTipo, Rol, RolAsignado, \
-    Notificacion
+    Notificacion, HistorialFases
 from django.contrib.auth.models import User
 import json
 
@@ -39,6 +39,7 @@ class sisred_appTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(versionMainAfter.es_final, True)
+
 
     @skip('revisar test fallido')
     def testMarcarComoVersionFinalFirstMark(self):
@@ -82,6 +83,8 @@ class sisred_appTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(versionMainAfter1.es_final, False)
         self.assertEqual(versionMainAfter2.es_final, True)
+
+
 
     def testBuscarRedNameAllParameters(self):
         fecha = datetime.datetime.now()
@@ -901,6 +904,44 @@ class VersionMarcarTestCase(TestCase):
         self.assertEqual(versionMainAfter1.es_final, False)
         self.assertEqual(versionMainAfter2.es_final, True)
 
+    def testMarcarComoVersionLista(self):
+        url1 = '/api/version-lista/'
+        url2 = '/marcar'
+        versionId = "2"
+        url = url1 + versionId + url2
+
+        fecha = datetime.datetime.now()
+        proyecto = ProyectoConectate.objects.create(id=2, fecha_inicio=fecha, fecha_fin=fecha)
+        red = RED.objects.create(id=2, proyecto_conectate=proyecto)
+        versionMain = Version.objects.create(id=20, es_final=False, es_lista=False, numero=2, red=red)
+
+        response = self.client.post(url, format='json')
+
+        versionMainAfter = Version.objects.get(id=2)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(versionMainAfter.es_lista, True)
+
+    def testMarcarComoVersionListaFirstMark(self):
+        url1 = '/api/version-lista/'
+        url2 = '/marcar'
+        versionId = "2"
+        url = url1 + versionId + url2
+
+        fecha = datetime.datetime.now()
+        proyecto = ProyectoConectate.objects.create(id=10, fecha_inicio=fecha, fecha_fin=fecha)
+        red = RED.objects.create(id=10, proyecto_conectate=proyecto)
+        versionMain = Version.objects.create(id=20, es_final=False, numero=20, red=red)
+        versionMain = Version.objects.create(id=10, es_final=False, numero=10, red=red)
+
+        response = self.client.post(url, format='json')
+
+        versionMainAfter1 = Version.objects.get(id=1)
+        versionMainAfter2 = Version.objects.get(id=2)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(versionMainAfter1.es_lista, False)
+        self.assertEqual(versionMainAfter2.es_lista, True)
 
 class sisRedTestCase(TestCase):
 
@@ -1489,3 +1530,119 @@ class SisredTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(current_data['contenido'], 'comentario prueba')
+
+class verAvanceTestCase(TestCase):
+
+    def test_get_avance_red_sin_fases(self):
+        fecha_inicio = datetime.datetime.strptime("2018-03-11", "%Y-%m-%d").date()
+        fecha_fin = datetime.datetime.strptime("2018-03-11", "%Y-%m-%d").date()
+        user = User.objects.create(username='user1', password='1234ABC', first_name='nombre1',
+                                   last_name='apellido1', email='user@uniandes.edu.co')
+
+        perfil = Perfil.objects.create(id_conectate='1', usuario=user, tipo_identificacion='CC',
+                                       numero_identificacion='1234', estado=1)
+
+        r1 = Recurso.objects.create(nombre="mi recurso", archivo="c:/miArchivo.txt", thumbnail="c:/miArchivo.txt",
+                                    tipo="txt", descripcion="", autor=perfil, usuario_ultima_modificacion=perfil)
+        proyectto_conectate = ProyectoConectate.objects.create(id_conectate='1', nombre='prueba',
+                                                               codigo='prueba', fecha_inicio=fecha_inicio,
+                                                               fecha_fin=fecha_fin)
+        red = RED.objects.create(id_conectate="S0001", nombre="null", nombre_corto="null", descripcion="1 video",
+                                 fecha_inicio="2019-12-31", fecha_cierre="2019-12-31", fecha_creacion="2019-12-31",
+                                 porcentaje_avance="0", tipo="Sin definir", solicitante="PR0011(Sandra)",
+                                 horas_estimadas="0", horas_trabajadas="0", proyecto_conectate_id=proyectto_conectate.id)
+        red.recursos.add(r1)
+
+        response = self.client.get('/api/getAvanceRED/'+ str(red.id))
+        current_data = json.loads(response.content)
+        print(current_data)
+
+        self.assertEqual(current_data['nombre'], red.nombre)
+
+    def test_get_avance_red_con_fases(self):
+        proyecto_conectate = ProyectoConectate.objects.create(id_conectate='2', nombre='namepy',
+                                                              nombre_corto='nameShort',
+                                                              codigo='code', fecha_inicio='1999-12-19',
+                                                              fecha_fin='2001-12-20')
+        fase = Fase.objects.create(
+            id_conectate=proyecto_conectate.id_conectate,
+            nombre_fase='produccion',
+        )
+        fase2 = Fase.objects.create(
+            id_conectate=proyecto_conectate.id_conectate,
+            nombre_fase='preproduccion',
+        )
+        user = User.objects.create(username='user1', password='1234ABC', first_name='nombre1',
+                                   last_name='apellido1', email='user@uniandes.edu.co')
+
+        perfil = Perfil.objects.create(id_conectate='1', usuario=user, tipo_identificacion='CC',
+                                       numero_identificacion='1234', estado=1)
+
+        r1 = Recurso.objects.create(nombre="mi recurso", archivo="c:/miArchivo.txt", thumbnail="c:/miArchivo.txt",
+                                    tipo="txt", descripcion="", autor=perfil, usuario_ultima_modificacion=perfil)
+
+        red = RED.objects.create(
+            id_conectate='1',
+            nombre='nombre',
+            nombre_corto='nombre_corto',
+            descripcion='descripcion',
+            fecha_inicio=None,
+            fecha_cierre=None,
+            porcentaje_avance=50,
+            tipo='tipo',
+            solicitante='solicitante',
+            proyecto_conectate=proyecto_conectate,
+            horas_estimadas=8,
+            horas_trabajadas=7,
+            fase=fase,
+        )
+
+        red.recursos.add(r1)
+
+
+        historial1 = HistorialFases.objects.create(fase=fase, red=red, comentario="Cambio de prueba 2")
+        historial2 = HistorialFases.objects.create(fase=fase2, red=red, comentario="Cambio de prueba 2")
+
+        response = self.client.get('/api/getAvanceRED/'+ str(red.id))
+        current_data = json.loads(response.content)
+        print(current_data)
+
+        self.assertEqual(current_data['fases'][0]['comentario'], historial2.comentario)
+        self.assertEqual(current_data['fases'][1]['comentario'], historial1.comentario)
+    def testMarcarComoVersionListaJustOne(self):
+        url1 = '/api/version-lista/'
+        url2 = '/marcar'
+        versionId = "1"
+        url = url1 + versionId + url2
+
+        fecha = datetime.datetime.now()
+        proyecto = ProyectoConectate.objects.create(id=1, fecha_inicio=fecha, fecha_fin=fecha)
+        red = RED.objects.create(id=1, proyecto_conectate=proyecto)
+        versionMain = Version.objects.create(id=1, es_final=False, numero=1, red=red)
+
+        response = self.client.post(url, format='json')
+
+        versionMainAfter = Version.objects.get(id=1)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(versionMainAfter.es_lista, True)
+    def testMarcarComoVersionListoFirstMark(self):
+        url1 = '/api/version-lista/'
+        url2 = '/marcar'
+        versionId = "2"
+        url = url1 + versionId + url2
+
+        fecha = datetime.datetime.now()
+        proyecto = ProyectoConectate.objects.create(id=1, fecha_inicio=fecha, fecha_fin=fecha)
+        red = RED.objects.create(id=1, proyecto_conectate=proyecto)
+        versionMain = Version.objects.create(id=2, es_final=False, numero=2, red=red)
+        versionMain = Version.objects.create(id=1, es_final=False, numero=1, red=red)
+
+        response = self.client.post(url, format='json')
+
+        versionMainAfter1 = Version.objects.get(id=1)
+        versionMainAfter2 = Version.objects.get(id=2)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(versionMainAfter1.es_lista, False)
+        self.assertEqual(versionMainAfter2.es_lista, True)
