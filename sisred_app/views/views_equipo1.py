@@ -224,7 +224,7 @@ def comentario_cierre_post(request):
         version = Version.objects.get(id=data['version'])
         usuario = Perfil.objects.get(usuario__id=reqUser)
         comentario_multimedia = ComentarioMultimedia.objects.get(id=data['comentario_multimedia'])
-        fecha_creacion = datetime.now()
+        fecha_creacion = datetime.datetime.now()
         esCierre = data['esCierre']
 
         comentario = Comentario.objects.create(
@@ -332,7 +332,7 @@ def comentario_pdf_post(request):
         contenido = data['contenido']
         version = Version.objects.get(id=data['version'])
         usuario = Perfil.objects.get(usuario__id=reqUser)
-        fecha_creacion = datetime.now()
+        fecha_creacion = datetime.datetime.now()
 
         try:
             comentario_multimedia = ComentarioMultimedia.objects.get(id=data['comentario_multimedia'])
