@@ -108,3 +108,33 @@ class ProyectosSerializer(serializers.ModelSerializer):
 
     def get_red_close(self, obj):
         return RED.objects.filter(proyecto_conectate=obj.id).filter(fase__nombre_fase='Cerrado').count()
+
+class comentarioMultimediaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ComentarioMultimedia
+        fields = '__all__'
+
+class comentariosHijosSerializer(serializers.ModelSerializer):
+    comentarioMultimedia=comentarioMultimediaSerializer(many=False)
+    class Meta:
+        model = Comentario
+        fields = ('id','contenido','fecha_creacion','esCierre','resuelto','cerrado','usuario','version','UsuarioComentario','comentarioMultimedia')
+
+class ComentariosPDFSerializer(serializers.ModelSerializer):
+    comentariosHijos=comentariosHijosSerializer(many=True)
+    comentarioMultimedia=comentarioMultimediaSerializer(many=False)
+    class Meta:
+        model = Comentario
+        fields = ('id','contenido','fecha_creacion','esCierre','resuelto','cerrado','usuario','version','Width','Height','VersionArchivo','UsuarioComentario','comentarioMultimedia','comentariosHijos')
+
+class ComentarioCierreSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Comentario
+        fields = '__all__'
+
+class VersionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Version
+        fields = '__all__'

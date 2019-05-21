@@ -3,7 +3,7 @@ import json
 from django.contrib.auth.models import User
 from django.db.models.query import QuerySet
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponseBadRequest, HttpResponse
+from django.http import HttpResponseBadRequest, HttpResponse, JsonResponse, HttpResponseNotFound
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import  status
 from rest_framework.decorators import api_view
@@ -17,9 +17,7 @@ import requests
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
 from sisred_app.models import Recurso, RED, Perfil, Fase, HistorialFases, Version, Comentario, ComentarioMultimedia
 from sisred_app.serializer import RecursoSerializer, RecursoSerializer_post, RecursoSerializer_put, \
-     REDSerializer
-
-
+    REDSerializer, ComentarioCierreSerializer, comentariosHijosSerializer, ComentariosPDFSerializer
 
 
 #Autor: Francisco Perneth
