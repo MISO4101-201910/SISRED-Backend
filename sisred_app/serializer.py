@@ -1,5 +1,6 @@
 from .models import *
-
+from datetime import datetime, timedelta
+from django.db.models import Q
 from rest_framework import  serializers
 
 class MetadataSerializer(serializers.ModelSerializer):
@@ -74,3 +75,36 @@ class RolAsignadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = RolAsignado
         fields = ('rol',)
+
+class ProyectosSerializer(serializers.ModelSerializer):
+    red_count = serializers.SerializerMethodField()
+    red_alert = serializers.SerializerMethodField()
+    red_active = serializers.SerializerMethodField()
+    red_close = serializers.SerializerMethodField()
+    class Meta:
+        model = ProyectoConectate
+        fields = ('nombre', 'red_count', 'red_alert', 'red_active','red_close')
+
+    def get_red_count(self, obj):
+        return RED.objects.filter(proyecto_conectate=obj.id).count()
+
+    def get_red_alert(self, obj):
+        d = datetime.today() - timedelta(days=7)
+        a = RED.objects.filter(proyecto_conectate=obj.id).filter(fecha_creacion__lte=d)\
+            .filter(~Q(fase__nombre_fase='Cerrado')).filter(version__numero__isnull=True).count()
+        b = Comentario.objects.filter(version__red__proyecto_conectate=obj.id).filter(fecha_creacion__lte=d)\
+            .filter(~Q(version__red__fase__nombre_fase='Cerrado')).count()
+        alert = a + b
+        return alert
+
+    def get_red_active(self, obj):
+        d = datetime.today() - timedelta(days=7)
+        a = Comentario.objects.filter(version__red__proyecto_conectate=obj.id).filter(fecha_creacion__gte=d)\
+            .filter(~Q(version__red__fase__nombre_fase='Cerrado')).count()
+        b = RED.objects.filter(proyecto_conectate=obj.id).filter(fecha_creacion__gte=d)\
+            .filter(~Q(fase__nombre_fase='Cerrado')).filter(version__numero__isnull=True).count()
+        active = a + b
+        return active
+
+    def get_red_close(self, obj):
+        return RED.objects.filter(proyecto_conectate=obj.id).filter(fase__nombre_fase='Cerrado').count()

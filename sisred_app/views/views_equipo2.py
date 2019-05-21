@@ -11,6 +11,9 @@ from sisred_app.serializer import RecursoSerializer
 import datetime
 import json
 
+from sisred_app.views.views_equipo4 import createNotification
+
+
 @csrf_exempt
 def getProyectosRED(request):
     vLstObjects = list(ProyectoRED.objects.all())
@@ -28,6 +31,8 @@ def getRED(request):
 
 @csrf_exempt
 def marcarVersion(request,id):
+    NotificacionVersionFinal = 5
+
     if request.method == 'POST':
         version = get_object_or_404(Version, id=id)
 
@@ -38,6 +43,13 @@ def marcarVersion(request,id):
 
         version.es_final = True
         version.save()
+
+        result = createNotification(version.red_id, NotificacionVersionFinal)  # para crear la notificacion
+        print("notificacion:", result)
+
+        if result != {"mensaje": 'La notificacion ha sido creada'}:
+            return JsonResponse('No fue posible crear la notificacion', safe=False)
+
         return JsonResponse(str(id), safe=False)    
     return HttpResponseNotFound()     
     
@@ -271,6 +283,8 @@ def comentarioExistente(request,id_v, id_r):
 
 @csrf_exempt
 def comentarioNuevo(request,id_v, id_r):
+    NotificacionComentario = 2
+
     if request.method == 'POST':
         data = jsonUser = json.loads(request.body)
         version = get_object_or_404(Version, id=id_v)
@@ -297,6 +311,12 @@ def comentarioNuevo(request,id_v, id_r):
         comentario.save()
 
         serializer=ComentarioSerializer(comentario, many=False)
+
+        result = createNotification(id_r, NotificacionComentario)  # para crear la notificacion
+        print("notificacion:", result)
+
+        if result != {"mensaje": 'La notificacion ha sido creada'}:
+            return JsonResponse({"error":'No fue posible crear la notificacion'}, safe=True)
 
         return JsonResponse(serializer.data, safe=True)
     return HttpResponseNotFound()
