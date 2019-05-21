@@ -10,6 +10,11 @@ urlpatterns = [
     path('fase_byid/<int:id>', views_equipo1.fase_byid, name='fase_byid'),
     path('habilitar-usuario/<str:numero_identificacion>', views_equipo1.getUserByIdentification, name='habilitar-usuario'),
     path('habilitar-red/<str:id_conectate>', views_equipo1.getREDByIdentification, name='habilitar-red'),
+    path('comentario-cierre/', views_equipo1.comentario_cierre_post, name='comentario-cierre'),
+    path('comentario-cierre/base/<int:pk>', views_equipo1.comentario_cierre_put, name='comentario-cierre-put'),
+    path('comentario-base/<int:pk>', views_equipo1.comentario_base_get, name='comentario-base'),
+    path('comentario-pdf/<int:pk>/', views_equipo1.comentario_pdf_get, name='comentario_pdf_get'),
+    path('comentario-pdf/', views_equipo1.comentario_pdf_post, name='comentario-pdf-post'),
 
     path('post_proyecto_red/', views_equipo3.post_proyecto_red, name='agregar_proyecto_red'),
     path('detallered/', views_equipo3.get_detallered, name='detallered'),
