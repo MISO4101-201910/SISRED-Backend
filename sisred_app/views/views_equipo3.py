@@ -1,19 +1,29 @@
+from tokenize import Token
+
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 import json, decimal
 from django.http import JsonResponse
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.status import HTTP_400_BAD_REQUEST
+
 from sisred_app.models import RED, ProyectoRED, RolAsignado, Perfil, Metadata, Recurso, ProyectoConectate, Version, Comentario, ComentarioMultimedia, ComentarioVideo
 from django.http import HttpResponse
 from django.core import serializers
 from django.contrib.auth.models import User
-from datetime import datetime, timedelta
-
-from django.utils.formats import get_format
-from django.utils.dateparse import parse_date
+from rest_framework.authtoken.models import Token
+from rest_framework.response import Response
 
 # Create your views here.
 
 # Metodo para agregar un proyecto RED
+from sisred_app.serializer import RolAsignadoSerializer
+
+
+#Url del red. Este campo no existe en el modelo, por eso se deja esta variable
+urlRed = 'conectatePrueba.com/'
+
 @csrf_exempt
 def post_proyecto_red(request):
     if request.method == 'POST':
@@ -83,41 +93,14 @@ def get_detallered(request):
         red = request.GET['RED']
         red = RED.objects.get(id=red)
         nombreRed = red.nombre
-        url = 'conectatePrueba.com/'+nombreRed
+        url = urlRed+nombreRed
         status = 'No tiene'
         nombreProject = red.proyecto_conectate.nombre
         fase = red.fase
-        """historiales = HistorialEstados.objects.filter(red=red.pk)
-
-        if len(historiales) > 1:
-            ultimo = historiales[0]
-            ultimoDate = datetime.date(datetime(1800,1,1))
-            for hist in historiales :
-                datAct = hist.fecha_cambio
-                actDate = hist.fecha_cambio
-                if datAct > ultimoDate:
-                    ultimo = hist
-                    ultimoDate = actDate
-            status = ultimo.estado.nombre_estado"""
         fase_json = {"idConectate": fase.id_conectate, "nombreFase": fase.nombre_fase}
         respuesta = {"nombreRed": nombreRed, "nombreProject":nombreProject, "status":status, "url": url, "fase": fase_json}
 
     return HttpResponse(json.dumps(respuesta), content_type="application/json")
-
-@csrf_exempt
-def get_reds_asignados(request, id):
-    if request.method == 'GET':
-        perfil = Perfil.objects.get(id_conectate=id)
-        reds_asignados = []
-        rolesAsignado = RolAsignado.objects.filter(usuario=perfil)
-        for rolAsignado in rolesAsignado:
-            red = rolAsignado.red
-            rol = rolAsignado.rol.nombre
-            reds_asignados.append(
-                {"idRed": red.pk, "nombreRed": red.nombre_corto, "rol": rol})
-        respuesta = {
-            "redsAsignados": reds_asignados}
-        return JsonResponse(respuesta, safe=False)
 
 
 #Metodo para obtener los datos de una version dado su id y el RED asociado
@@ -144,12 +127,12 @@ def get_recursos_by_version(request):
 @csrf_exempt
 def get_comentarios_video(request, id):
     if request.method == 'GET':
-        print("Obteniendo comentarios del ID " + str(id))
         respuesta = []
         multimedias=[]
         try:
             recurso = Recurso.objects.get(pk=id)
             comentarios = Comentario.objects.filter(recurso=recurso)
+            cont = 0
             for comentario in comentarios:
                 if comentario.comentario_multimedia not in multimedias:
                     multimedias.append(comentario.comentario_multimedia)
@@ -171,12 +154,22 @@ def get_comentarios_video(request, id):
                     idUsuario = usuario.pk
                     metaVideo = {"datetime": comEsp.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S'), "user_id": idUsuario,
                                  "user_name": nombreUsuario}
-                    comentEsp.append({"id": str(comEsp.pk), "meta": metaVideo, "body": comEsp.contenido})
-                respuesta.append({"id": multimedia.pk, "range": rangeEsp, "shape": shape, "comments": comentEsp})
-                print(respuesta)
+                    comentEsp.append({"id": str(comEsp.pk), "meta": metaVideo, "body": comEsp.contenido,
+                                      "cerrado": comEsp.cerrado, "resuelto": comEsp.resuelto, "es_cierre": comEsp.esCierre})
+
+                comentEsp = sorted(comentEsp, key=lambda k: k['meta'].get('datetime', 0), reverse=False)
+                output_dict = [x for x in comentEsp if x['cerrado']]
+                if len(output_dict) > 0:
+                    comentEsp[0]['cerrado'] = True
+                    comentEsp[0]['resuelto'] = output_dict[0]['resuelto']
+                    cont = cont + len(output_dict)
+                respuesta.append({"id": multimedia.pk, "range": rangeEsp, "shape": shape, "comments": comentEsp,
+                                  "abiertos":0, "cerrados":0})
+
+            respuesta[0]['abiertos'] = len(respuesta) - cont
+            respuesta[0]['cerrados'] = cont
             return HttpResponse(json.dumps(respuesta, default=decimal_default), content_type="application/json")
         except Exception as ex:
-            print(ex)
             print("ERROR OBTENIENDO LOS COMENTARIOS DEL VIDEO " + str(ex))
         return HttpResponse(json.dumps(respuesta, default=decimal_default), content_type="application/json")
 
@@ -184,9 +177,7 @@ def get_comentarios_video(request, id):
 @csrf_exempt
 def post_comentarios_video(request, idVersion, idRecurso):
     if request.method == 'POST':
-        print("Persistiendo Comentarios Video en BD")
         commentsDetails = json.loads(request.body)
-        print(commentsDetails)
         for commentData in commentsDetails:
             idMultimedia = commentData['id']
             comentarioMultimedia = None
@@ -216,9 +207,6 @@ def post_comentarios_video(request, idVersion, idRecurso):
                     y2=y2
                 )
                 comentarioMultimedia.save()
-            print("ComentarioMultimediaData->")
-            print(comentarioMultimedia)
-
             rangeStart = commentData['range']['start']
             rangeStop = None
             try:
@@ -229,70 +217,63 @@ def post_comentarios_video(request, idVersion, idRecurso):
             #########  COMENTARIO VIDEO ###########
 
             comentarioVideo = ComentarioVideo.objects.filter(seg_ini=rangeStart).filter(seg_fin=rangeStop).filter(comentario_multimedia=comentarioMultimedia)
-            print(comentarioVideo)
             if not comentarioVideo:
                 comentarioVideo = ComentarioVideo(
                     seg_ini=rangeStart,
                     seg_fin=rangeStop + 1,
                     comentario_multimedia=comentarioMultimedia
                 )
-                print("Creando Comentario Video")
                 comentarioVideo.save()
 
-            #########  COMENTARIO  ###########
-            comentarios = commentData['comments']
-            print("Comentarios->")
-            for comment in comentarios:
-                idComentario = comment['id']
-                commentBody = comment['body']
-                userID = comment['meta']['user_id']
-                dateTime = comment['meta']['datetime']
-                print("Validando comentario ID: "+str(idComentario))
-                try:
-                    if (isNum(idComentario)):  # Ya que la libreria envia unas cadenas
-                        comentario = Comentario.objects.get(pk=idComentario)
-                        print("Se ignora ya que existe -> "+comentario.contenido)
-                        continue
-                    else:
-                        try:
-                            comentario = Comentario.objects.get(id_video_libreria=idComentario)
-                        except Exception as ex:
-                            comentario = None
-                            print("No existe")
-                        if(comentario == None):
-                            print("Creando Nuevo objeto")
-                            version = Version.objects.get(pk=idVersion)
-                            recurso = Recurso.objects.get(pk=idRecurso)
-                            usuario = Perfil.objects.get(pk=userID)
-
-                            comentario = Comentario(
-                                id_video_libreria=idComentario,
-                                contenido=commentBody,
-                                version=version,
-                                recurso=recurso,
-                                usuario=usuario,
-                                comentario_multimedia=comentarioMultimedia
-                            )
-                            print(comment)
-                            print(comentario)
-                            comentario.save()
-                except Exception as ex:
-                    print(ex)
-
+            saveComentario(commentData['comments'], comentarioMultimedia, idVersion, idRecurso)
         return HttpResponse()
+
+
+# Metodo que guarda el comentario
+def saveComentario(comentarios, comentarioMultimedia, idVersion, idRecurso):
+    #########  COMENTARIO  ###########
+    for comment in comentarios:
+        idComentario = comment['id']
+        commentBody = comment['body']
+        userID = comment['meta']['user_id']
+        dateTime = comment['meta']['datetime']
+        try:
+            if (isNum(idComentario)):  # Ya que la libreria envia unas cadenas
+                comentario = Comentario.objects.get(pk=idComentario)
+                continue
+            else:
+                try:
+                    comentario = Comentario.objects.get(id_video_libreria=idComentario)
+                except Exception as ex:
+                    comentario = None
+                if (comentario == None):
+                    version = Version.objects.get(pk=idVersion)
+                    recurso = Recurso.objects.get(pk=idRecurso)
+                    usuario = Perfil.objects.get(id_conectate=userID)
+
+                    comentario = Comentario(
+                        id_video_libreria=idComentario,
+                        contenido=commentBody,
+                        version=version,
+                        recurso=recurso,
+                        usuario=usuario,
+                        comentario_multimedia=comentarioMultimedia
+                    )
+                    comentario.save()
+        except Exception as ex:
+            print(ex)
+
 
 # Metodo para obtener la url del recurso video
 @csrf_exempt
 def get_url_recurso_video(request, id):
     if request.method == 'GET':
-        print("Obteniendo url del recurso con ID " + str(id))
         respuesta = []
         try:
             recurso = Recurso.objects.get(pk=id)
             respuesta.append({"url": recurso.archivo})
             return HttpResponse(json.dumps(respuesta), content_type="application/json")
         except Exception as ex:
-            print(ex)
             print("ERROR OBTENIENDO LA URL DEL VIDEO " + str(ex))
         return HttpResponse(json.dumps(respuesta), content_type="application/json")
 
@@ -321,5 +302,102 @@ def get_versiones_revision(request, id):
         for rol in rolesAsignados:
             versiones = Version.objects.filter(red=rol.red)
             for ver in versiones:
-                respuesta.append({"versionId": ver.pk,"redId": rol.red.pk, "rol": rol.rol.nombre, "red": rol.red.nombre, "fecha": ver.date.strftime("%d/%m/%Y")})
+                respuesta.append({"versionId": ver.pk,"redId": rol.red.pk, "rol": rol.rol.nombre, "red": rol.red.nombre, "fecha": ver.fecha_creacion.strftime("%d/%m/%Y")})
     return HttpResponse(json.dumps(respuesta), content_type="application/json")
+
+@csrf_exempt
+def get_comentarios(request,idRecurso):
+        if request.method == 'GET':
+            comentarios = Comentario.objects.filter(recurso=idRecurso)
+            respuesta = []
+            for com in comentarios:
+                perfil = Perfil.objects.get(pk=com.usuario_id)
+                usuario = User.objects.get(pk=perfil.usuario_id)
+                nombre = usuario.first_name + " " + usuario.last_name
+                respuesta.append(
+                    {"contenido": com.contenido, "recurso": com.recurso_id, "version": com.version_id,
+                     "usuario": nombre, "fecha": com.fecha_creacion.strftime("%d/%m/%Y %H:%M:%S")})
+            if len(comentarios) == 0:
+                return HttpResponse('no hay registros')
+
+            return HttpResponse(json.dumps(respuesta), content_type="application/json")
+
+
+@csrf_exempt
+def post_comment(request):
+    if request.method == 'POST':
+        json_comentarios = json.loads(request.body)
+        recurso = Recurso.objects.get(id=json_comentarios['recurso_id'])
+        version = Version.objects.get(id=json_comentarios['version_id'])
+        perfil = Perfil.objects.get(id_conectate=json_comentarios['usuario_id'])
+        if recurso == None:
+            return HttpResponse('El recurso debe existir')
+        else:
+            json_comment = json.loads(request.body)
+            nuevo_comentario = Comentario(
+                contenido=json_comment['contenido'],
+                recurso_id=recurso.pk,
+                usuario_id=perfil.pk,
+                version_id=version.pk
+                )
+            nuevo_comentario.save()
+
+        return HttpResponse(serializers.serialize("json", [nuevo_comentario]))
+
+# Metodo para cerrar comentario de un recurso tipo video
+@csrf_exempt
+def post_cerrar_comentario_video(request):
+    if request.method == 'POST':
+        json_comentario_cierre = json.loads(request.body)
+        recurso = Recurso.objects.get(pk=json_comentario_cierre['id_recurso'])
+        perfil = Perfil.objects.get(id_conectate=json_comentario_cierre['id_usuario'])
+        multimedia = ComentarioMultimedia.objects.get(pk=json_comentario_cierre['id_multimedia'])
+        comentario_cierre = Comentario(
+            contenido=json_comentario_cierre['contenido'],
+            recurso=recurso,
+            usuario=perfil,
+            comentario_multimedia=multimedia,
+            cerrado=json_comentario_cierre['cerrado'],
+            resuelto=json_comentario_cierre['resuelto'],
+            esCierre=json_comentario_cierre['es_cierre'])
+        comentario_cierre.save()
+        return HttpResponse(serializers.serialize("json", [comentario_cierre]))
+
+
+@csrf_exempt
+@api_view(["GET"])
+@permission_classes((AllowAny,))
+def getRolAsignadoREDPorRecurso(request, idRecurso, idUsuario):
+        recurso = Recurso.objects.get(pk=idRecurso)
+        red = RED.objects.get(recursos__pk=idRecurso) #RED.objects.distinct().first().recursos.distinct().first()
+        idRed = red.pk
+        rol = RolAsignado.objects.filter(red=idRed).filter(usuario__pk=idUsuario)
+        if not rol:
+            return Response({'error': 'No autorizado'}, status=HTTP_400_BAD_REQUEST)
+        if request.method == 'GET':
+            serializer = RolAsignadoSerializer(rol, many=True)
+            return JsonResponse(serializer.data, safe=False)
+
+            
+            
+@csrf_exempt
+def get_reds_asignados(request, id):
+    if request.method == 'GET':
+        perfil = Perfil.objects.get(id_conectate=id)
+        reds_asignados = []
+        rolesAsignado = RolAsignado.objects.filter(usuario=perfil)
+        for rolAsignado in rolesAsignado:
+            red = rolAsignado.red
+            version_id = None
+            version_numero = None
+            try:
+                version = Version.objects.filter(red=red).latest('fecha_creacion')
+                version_id = version.id
+                version_numero = version.numero
+            except Version.DoesNotExist:
+                version = None
+            reds_asignados.append(
+                {"idRed": red.pk, "nombreRed": red.nombre, "descripcion": red.descripcion, "tipo": red.tipo, "solicitante": red.solicitante, "fecha_inicio": red.fecha_inicio, "fecha_cierre": red.fecha_cierre, "porcentaje": red.porcentaje_avance, "horas_estimadas": red.horas_estimadas, "listo_revision": red.listo_para_revision, "version_id": version_id, "version_numero": version_numero})
+        respuesta = {
+            "redsAsignados": reds_asignados}
+        return JsonResponse(respuesta, safe=False)

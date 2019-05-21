@@ -2,7 +2,7 @@ from django.test import TestCase
 from unittest import skip
 
 from .models import Version, RED, ProyectoConectate, Metadata, Perfil, Recurso, RolAsignado, Rol, ComentarioMultimedia, \
-    Comentario
+    Comentario, ComentarioVideo
 from django.contrib.auth.models import User
 import datetime
 import json
@@ -12,7 +12,7 @@ from .models import User, Perfil, RED, Fase, ProyectoConectate, Recurso, Notific
     Notificacion, HistorialFases
 from django.contrib.auth.models import User
 import json
-
+from unittest import skip
 
 # Create your tests here.
 class sisred_appTestCase(TestCase):
@@ -1343,8 +1343,7 @@ class RR02TestCase(TestCase):
     @skip("Revisar test fallido")
     def test_get_version(self):
         url = '/api/get_version/'
-        fecha_inicio = datetime.datetime.strptime("2018-03-11", "%Y-%m-%d").date()
-        fecha_fin = datetime.datetime.strptime("2018-03-11", "%Y-%m-%d").date()
+        fecha = datetime.datetime.now()
         proyectto_conectate = ProyectoConectate.objects.create(id_conectate='1', nombre='prueba',
                                                                codigo='prueba', fecha_inicio=fecha,
                                                                fecha_fin=fecha)
@@ -1359,8 +1358,8 @@ class RR02TestCase(TestCase):
     @skip("Revisar test fallido")
     def test_get_recursos(self):
         url = '/api/get_recursos_by_version/'
-        fecha_inicio = datetime.datetime.strptime("2018-03-11", "%Y-%m-%d").date()
-        fecha_fin = datetime.datetime.strptime("2018-03-11", "%Y-%m-%d").date()
+        fecha = datetime.datetime.now()
+
         proyectto_conectate = ProyectoConectate.objects.create(id_conectate='1', nombre='prueba',
                                                                codigo='prueba', fecha_inicio=fecha,
                                                                fecha_fin=fecha)
@@ -1370,9 +1369,8 @@ class RR02TestCase(TestCase):
         user_model = User.objects.create_user(username='user1', password='1234ABC*', first_name='Usuario',
                                               last_name='uno', email='user1@coquito.com')
         perfil = Perfil.objects.create(id_conectate='1', usuario=user_model, estado=1)
-        recurso = version.recursos.create(nombre='prueba', archivo='prueba', thumbnail='prueba',
-                                          fecha_creacion=fecha_inicio,
-                                          fecha_ultima_modificacion=fecha_inicio, tipo='prueba', descripcion='prueba',
+        recurso = version.recursos.create(nombre='prueba', archivo='prueba', thumbnail='prueba', fecha_creacion=fecha,
+                                          fecha_ultima_modificacion=fecha, tipo='prueba', descripcion='prueba',
                                           autor=perfil, usuario_ultima_modificacion=perfil)
         response = self.client.get(url, {'id': '1'})
         current_data = json.loads(response.content)
@@ -1581,6 +1579,7 @@ class verAvanceTestCase(TestCase):
         r1 = Recurso.objects.create(nombre="mi recurso", archivo="c:/miArchivo.txt", thumbnail="c:/miArchivo.txt",
                                     tipo="txt", descripcion="", autor=perfil, usuario_ultima_modificacion=perfil)
 
+
         red = RED.objects.create(
             id_conectate='1',
             nombre='nombre',
@@ -1646,3 +1645,99 @@ class verAvanceTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(versionMainAfter1.es_lista, False)
         self.assertEqual(versionMainAfter2.es_lista, True)
+class RR03_1TestCase(TestCase):
+    def test_get_comments(self):
+        fecha_inicio = datetime.datetime.now()
+        fecha_fin = datetime.datetime.now()
+        proyectto_conectate = ProyectoConectate.objects.create(id_conectate='1', nombre='prueba',
+                                                               codigo='prueba', fecha_inicio=fecha_inicio,
+                                                               fecha_fin=fecha_fin)
+        red = RED.objects.create(id_conectate='1', nombre='pruebaRED', descripcion='prueba',
+                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyectto_conectate)
+        version = Version.objects.create(numero=1, imagen='prueba', red=red, id=1)
+        user_model = User.objects.create_user(username='user1', password='1234ABC*', first_name='Usuario',
+                                              last_name='uno', email='user1@coquito.com')
+        perfil = Perfil.objects.create(id_conectate='1', usuario=user_model, estado=1)
+        recurso = version.recursos.create(nombre='prueba', archivo='prueba', thumbnail='prueba', fecha_creacion=fecha_inicio,
+                                          fecha_ultima_modificacion=fecha_inicio, tipo='prueba', descripcion='prueba',
+                                          autor=perfil, usuario_ultima_modificacion=perfil)
+        nuevo_comentario = Comentario.objects.create(contenido='Comentario de prueba', recurso_id=recurso.pk,
+                                                     usuario_id=perfil.pk, version_id=version.pk)
+        response = self.client.get('/api/get_comentarios/' + str(recurso.pk))
+        current_data = json.loads(response.content)
+
+        self.assertEqual(current_data[0]['contenido'], 'Comentario de prueba')
+
+    def test_post_comment(self):
+        fecha_inicio = datetime.datetime.now()
+        fecha_fin = datetime.datetime.now()
+        proyectto_conectate = ProyectoConectate.objects.create(id_conectate='1', nombre='prueba',
+                                                               codigo='prueba', fecha_inicio=fecha_inicio,
+                                                               fecha_fin=fecha_fin)
+        red = RED.objects.create(id_conectate='1', nombre='pruebaRED', descripcion='prueba',
+                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyectto_conectate)
+        version = Version.objects.create(numero=1, imagen='prueba', red=red, id=1)
+        user_model = User.objects.create_user(username='user1', password='1234ABC*', first_name='Usuario',
+                                              last_name='uno', email='user1@coquito.com')
+        perfil = Perfil.objects.create(id_conectate='1', usuario=user_model, estado=1)
+        recurso = version.recursos.create(nombre='prueba', archivo='prueba', thumbnail='prueba', fecha_creacion=fecha_inicio,
+                                          fecha_ultima_modificacion=fecha_inicio, tipo='prueba', descripcion='prueba',
+                                          autor=perfil, usuario_ultima_modificacion=perfil)
+
+        response = self.client.post('/api/post_comment/', json.dumps({"contenido": "Contenido de prueba", "recurso_id": recurso.pk,"usuario_id": perfil.id_conectate,"version_id": version.pk}),
+                                    content_type='application/json')
+        current_data = json.loads(response.content)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(recurso.pk, current_data[0]['fields']['recurso'])
+        self.assertEqual(perfil.pk, current_data[0]['fields']['usuario'])
+        self.assertEqual(version.pk, current_data[0]['fields']['version'])
+        self.assertEqual('Contenido de prueba', current_data[0]['fields']['contenido'])
+
+class CerrarComentarioVideoTestCase(TestCase):
+    def test_cerrar_comentario_video(self):
+        url = '/api/comentarios/video/cierre'
+
+        usuario = User.objects.create_user(username='user1', password='123456', email='user1@test.com',
+                                           first_name='user', last_name=' userTest')
+        perfil = Perfil.objects.create(id_conectate=123, usuario=usuario, estado=1)
+        proyecto = ProyectoConectate.objects.create(id_conectate='1', nombre='MISO', codigo='0001',
+                                                    fecha_inicio='2019-05-11', fecha_fin='2019-05-18')
+        recurso = Recurso.objects.create(nombre='recurso 1', tipo='video', archivo='url', thumbnail='url',
+                                         descripcion='recurso 1', autor=perfil, usuario_ultima_modificacion=perfil)
+
+        red = RED.objects.create(id_conectate='1', nombre='RED 1', descripcion='RED 1',
+                                 tipo='video', solicitante='', proyecto_conectate=proyecto)
+
+        version = Version.objects.create(numero=1, red=red, creado_por=perfil, fecha_creacion='2019-05-11',
+                                         imagen='url')
+
+        version.recursos.set([recurso])
+
+        multimedia = ComentarioMultimedia.objects.create(x1=10.2, y1=50.1, x2=30.5, y2=14.3)
+
+        response = self.client.post(url, json.dumps(
+            {"id_recurso": recurso.pk, "id_usuario": perfil.id_conectate, "id_multimedia": multimedia.pk,
+             "contenido": "Se cierra comentario de manera exitosa", "cerrado": True, "resuelto": True,
+             "es_cierre": True}), content_type='application/json')
+        print(response)
+        current_data = json.loads(response.content)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(current_data[0]['fields']['esCierre'], True)
+
+        
+class RR08TestCase(TestCase):
+    def test_get_reds_asignados(self):
+        fecha = datetime.datetime.now()
+        proyectto_conectate = ProyectoConectate.objects.create(id_conectate='1', nombre='prueba',
+                                                               codigo='prueba', fecha_inicio=fecha,
+                                                               fecha_fin=fecha)
+        red = RED.objects.create(id_conectate='1', nombre='pruebaRED', descripcion='prueba',
+                                 tipo='prueba', solicitante='prueba', proyecto_conectate=proyectto_conectate)
+        user_model = User.objects.create_user(username='user1', password='1234ABC*', first_name='Usuario',
+                                              last_name='uno', email='user1@coquito.com')
+        perfil = Perfil.objects.create(id_conectate='1', usuario=user_model, estado=1)
+        rol = Rol.objects.create(id_conectate='1', nombre='rolPrueba')
+        RolAsignado.objects.create(id_conectate='1', estado=1, red=red, rol=rol, usuario=perfil)
+        response = self.client.get('/api/reds/asignados/1')
+        current_data = json.loads(response.content)
+        self.assertEqual(len(current_data), 1)
