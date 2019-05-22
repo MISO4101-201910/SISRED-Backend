@@ -155,7 +155,7 @@ class ProyectosSerializer(serializers.ModelSerializer):
     red_close = serializers.SerializerMethodField()
     class Meta:
         model = ProyectoConectate
-        fields = ('nombre', 'red_count', 'red_alert', 'red_active','red_close')
+        fields = ('id', 'nombre', 'red_count', 'red_alert', 'red_active','red_close')
 
     def get_red_count(self, obj):
         return RED.objects.filter(proyecto_conectate=obj.id).count()
