@@ -1,3 +1,5 @@
+import math
+
 from django.db import models
 import datetime
 from django.contrib.auth.models import User
@@ -151,6 +153,7 @@ class HistorialFases(models.Model):
 
 class Version(models.Model):
     es_final = models.BooleanField(default=False)
+    es_lista = models.BooleanField(default=False)
     numero = models.IntegerField()
     imagen = models.CharField(max_length=200, null=True)
     archivos = models.CharField(max_length=200)
@@ -217,6 +220,42 @@ class Comentario(models.Model):
     def __str__(self):
         return 'Comentario: ' + self.contenido
 
+    @property
+    def EsPadre(self):
+        Comen = Comentario.objects.filter(version=self.version,comentario_multimedia=self.comentario_multimedia).order_by("id").exclude(id=self.id)
+        if len(Comen) == 0:
+            return True
+        else:
+            for item in Comen:
+                if item.id <self.id:
+                    return  False
+                else:
+                    return  True
+
+    @property
+    def comentariosHijos(self):
+        Comen=Comentario.objects.filter(version=self.version, comentario_multimedia=self.comentario_multimedia).order_by("id").exclude(id=self.id)
+        return  Comen
+
+    @property
+    def comentarioMultimedia(self):
+        return self.comentario_multimedia
+
+    @property
+    def Width(self):
+        return  math.fabs(self.comentario_multimedia.x2 - self.comentario_multimedia.x1)
+
+    @property
+    def Height(self):
+        return math.fabs(self.comentario_multimedia.y2 - self.comentario_multimedia.y1)
+
+    @property
+    def VersionArchivo(self):
+        return self.version.archivos
+
+    @property
+    def UsuarioComentario(self):
+        return self.usuario.usuario.first_name + " " + self.usuario.usuario.last_name
 
 class Propiedad(models.Model):
     llave = models.CharField(max_length=200)

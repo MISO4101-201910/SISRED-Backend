@@ -47,15 +47,10 @@ class ResourceSerializer(serializers.ModelSerializer):
         model = Recurso
         fields = '__all__'
 
-#class RolSerializer(serializers.ModelSerializer):
-#    class Meta:
-#        model = Rol
-#        fields = ('nombre',)
-
 class RolSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rol
-        fields = '__all__'
+        fields = ('nombre',)
 
 
 class RedRolSerializer(serializers.ModelSerializer):
@@ -75,6 +70,13 @@ class RedDetSerializer(serializers.ModelSerializer):
         model = RED
         fields = ('id_conectate', 'nombre', 'descripcion', 'recursos')
 
+class RolAsignadoSerializer(serializers.ModelSerializer):
+    rol = RolSerializer()
+    class Meta:
+        model = RolAsignado
+        fields = ('rol',)
+
+<<<<<<< HEAD
 class ProyectoSerializer_v(serializers.ModelSerializer):
     class Meta:
         model = ProyectoConectate
@@ -109,11 +111,10 @@ class RedSerializer(serializers.ModelSerializer):
         model = RED
         fields = '__all__'
 
-#class RolAsignadoSerializer(serializers.ModelSerializer):
-#    rol = RolSerializer()
-#    class Meta:
-#        model = RolAsignado
-#        fields = ('rol',)
+class RolSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rol
+        fields = '__all__'
 
 class RolAsignadoSerializer(serializers.ModelSerializer):
     red = RedSerializer()
@@ -147,7 +148,7 @@ class ProyectoREDSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProyectoRED
         fields= '__all__'
-        
+=======
 class ProyectosSerializer(serializers.ModelSerializer):
     red_count = serializers.SerializerMethodField()
     red_alert = serializers.SerializerMethodField()
@@ -205,8 +206,9 @@ class ComentarioCierreSerializer(serializers.ModelSerializer):
         model = Comentario
         fields = '__all__'
 
-#class VersionSerializer(serializers.ModelSerializer):
+class VersionSerializer(serializers.ModelSerializer):
 
-    #class Meta:
-    #    model = Version
-    #    fields = '__all__'
+    class Meta:
+        model = Version
+        fields = '__all__'
+>>>>>>> ReleaseSprint3

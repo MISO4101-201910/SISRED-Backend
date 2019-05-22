@@ -2,23 +2,24 @@ from django.shortcuts import get_object_or_404,get_list_or_404
 from django.core import serializers
 from django.core.serializers import serialize
 from rest_framework import serializers
-from django.http import HttpResponse, JsonResponse, HttpResponseNotFound, Http404, HttpResponseForbidden
+from django.http import HttpResponse, JsonResponse, HttpResponseNotFound, Http404, HttpResponseForbidden, HttpResponseBadRequest
 from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
 from sisred_app.models import ProyectoRED, Recurso, RED, RolAsignado, Perfil, Rol, ProyectoConectate, Version, Comentario, ComentarioMultimedia, HistorialFases
 from django.contrib.auth.models import User
 from sisred_app.serializer import RecursoSerializer
-from rest_framework.authtoken.models import Token
-<<<<<<< HEAD
-from rest_framework.permissions import AllowAny
-from rest_framework.decorators import api_view, permission_classes
-=======
->>>>>>> Equipo2Sprint3Develop
 import datetime
 import json
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import api_view, permission_classes
+from .views_equipo4 import createNotification
+from rest_framework import status
+from sisred_app.serializer import *
+
+
+from sisred_app.views.views_equipo4 import createNotification
+
 
 @csrf_exempt
 def getProyectosRED(request):
@@ -37,7 +38,12 @@ def getRED(request):
 
 @csrf_exempt
 def marcarVersion(request,id):
+    NotificacionVersionFinal = 5
+
     if request.method == 'POST':
+        tokenStatus = getTokenStatus(request)
+        if(not tokenStatus):
+            return HttpResponse('Invalid Token')
         version = get_object_or_404(Version, id=id)
 
         otherVersions = get_list_or_404(Version, red_id = version.red_id)
@@ -47,17 +53,27 @@ def marcarVersion(request,id):
 
         version.es_final = True
         version.save()
+
+        result = createNotification(version.red_id, NotificacionVersionFinal)  # para crear la notificacion
+        print("notificacion:", result)
+
+        if result != {"mensaje": 'La notificacion ha sido creada'}:
+            return JsonResponse('No fue posible crear la notificacion', safe=False)
+
         return JsonResponse(str(id), safe=False)    
     return HttpResponseNotFound()     
     
 def buscarRed(request):
-    token = request.META['HTTP_AUTHORIZATION']
+
+    #verificar si el usuario esta logueado
     tokenStatus = getTokenStatus(request)
     if(not tokenStatus):
         return HttpResponseForbidden('Invalid Token')
 
+    #traer el perfil del usuario que esta logueado
+    token = request.META['HTTP_AUTHORIZATION']
+    token = token.replace('Token ', '')
     userId = Token.objects.get(key=token).user.id
-    #userId =  User.objects.get(username='test').id
 
     if request.method == 'GET':
         fstart = request.GET.get("fstart")
@@ -70,6 +86,7 @@ def buscarRed(request):
 
         redsAsignados = RED.objects.filter(rolasignado__in=roles_asignado).values() 
         
+        #crear una querry vacia
         q = RED.objects.filter() 
 
         if text:
@@ -83,6 +100,7 @@ def buscarRed(request):
 
         listOfReds = list(q.values())
 
+        #asignar si esta asignado el red al usuario o no
         for red in listOfReds:
             if(any(redOfList['id'] == red['id'] for redOfList in redsAsignados)):
                 red['asignado']=True
@@ -92,56 +110,19 @@ def buscarRed(request):
         return JsonResponse(listOfReds,safe=False)
     return HttpResponseNotFound()
 
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ('username', 'first_name', 'last_name', 'email')
-
-
-class PerfilSerializer(serializers.ModelSerializer):
-    usuario = UserSerializer()
-    class Meta:
-        model = Perfil
-        fields = '__all__'
-
-
-class RedSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = RED
-        fields = '__all__'
-
-
-class RolSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Rol
-        fields = '__all__'
-
-
-class RolAsignadoSerializer(serializers.ModelSerializer):
-    red = RedSerializer()
-    usuario = PerfilSerializer()
-    rol = RolSerializer()
-    class Meta:
-        model = RolAsignado
-        fields = ('red', 'rol', 'usuario')
-
-class VersionSerializer(serializers.ModelSerializer):
-    creado_por = PerfilSerializer()
-    class Meta:
-        model = Version
-        fields= '__all__'
-
-
 @csrf_exempt
 def getAsignaciones(request):
     data = list(RolAsignado.objects.all())
     serializer = RolAsignadoSerializer(data, many=True)
     return JsonResponse({'context': serializer.data}, safe=True)
 
-
 @csrf_exempt
 def versiones(request):
+    #verificar si el usuario esta logueado
+    tokenStatus = getTokenStatus(request)
+    if(not tokenStatus):
+        return HttpResponseForbidden('Invalid Token')
+
     if request.method == 'POST':
         data = jsonUser = json.loads(request.body)
         es_final = False
@@ -153,30 +134,16 @@ def versiones(request):
         idRecursos = data['recursos']
 
         red = get_object_or_404(RED, id=redId)
-
         oldVersions = Version.objects.filter(red__id=redId)
-
         numero = 1
 
         if len(oldVersions) > 0:
             numero = max((v.numero for v in oldVersions)) + 1
 
-
         recursos = Recurso.objects.filter(id__in=idRecursos)
-
-
         creado_por=Perfil.objects.get(usuario__username=data['creado_por'])
 
-
-        version = Version.objects.create(
-            es_final=es_final,
-            imagen=imagen,
-            archivos=archivos,
-            red=red,
-            numero=numero,
-            creado_por=creado_por,
-            fecha_creacion=fecha_creacion,
-        )
+        version = createVersion(es_final, imagen, archivos, red, numero, creado_por, fecha_creacion)
 
         newrecursos=[]
         for i in recursos:
@@ -192,6 +159,18 @@ def versiones(request):
         return JsonResponse(serializer.data, safe=True)
     return HttpResponseNotFound()
 
+def createVersion(es_final, imagen, archivos, red, numero, creado_por, fecha_creacion):
+    version = Version.objects.create(
+        es_final=es_final,
+        imagen=imagen,
+        archivos=archivos,
+        red=red,
+        numero=numero,
+        creado_por=creado_por,
+        fecha_creacion=fecha_creacion,
+    )
+    return version
+
 @csrf_exempt
 def getRecursosRed(request, id):
     red = get_object_or_404(RED, id=id)
@@ -199,36 +178,21 @@ def getRecursosRed(request, id):
     serializer = RecursoSerializer(red.recursos, many=True)
     return JsonResponse({'context':serializer.data}, safe=True)
 
-
-class ProyectoSerializer_v(serializers.ModelSerializer):
-    class Meta:
-        model = ProyectoConectate
-        fields = ('nombre',)
-
-class RedSerializer_v(serializers.ModelSerializer):
-    proyecto_conectate = ProyectoSerializer_v()
-    class Meta:
-        model = RED
-        fields = ('nombre', 'proyecto_conectate')
-
-class VersionSerializer_v(serializers.ModelSerializer):
-    red = RedSerializer_v()
-    creado_por = PerfilSerializer()
-    class Meta:
-        model = Version
-        fields = '__all__'
-
-
 @csrf_exempt
 def getVerVersion(request, id):
+    tokenStatus = getTokenStatus(request)
+    if(not tokenStatus):
+        return HttpResponse('Invalid Token')
     version = get_object_or_404(Version, id=id)
 
     serializer = VersionSerializer_v(version, many=False)
     return JsonResponse(serializer.data, safe=True)
 
-
 @csrf_exempt
 def getVerVersionR(request, id):
+    tokenStatus = getTokenStatus(request)
+    if(not tokenStatus):
+        return HttpResponse('Invalid Token')
     version = get_object_or_404(Version, id=id)
 
     serializer = RecursoSerializer(version.recursos, many=True)
@@ -237,6 +201,9 @@ def getVerVersionR(request, id):
 
 @csrf_exempt
 def getVersionesRED(request, id):
+    tokenStatus = getTokenStatus(request)
+    if(not tokenStatus):
+        return HttpResponse('Invalid Token')
     try:
         red = RED.objects.get(pk=id)
     except:
@@ -245,23 +212,12 @@ def getVersionesRED(request, id):
     serializer = VersionSerializer(data, many=True)
     return JsonResponse({'context': serializer.data}, safe=True)
 
-class ComentarioMultimediaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ComentarioMultimedia
-        fields = '__all__'
-
-class ComentarioSerializer(serializers.ModelSerializer):
-    version=VersionSerializer()
-    recurso=RecursoSerializer()
-    comentario_multimedia=ComentarioMultimediaSerializer()
-    usuario=PerfilSerializer()
-    class Meta:
-        model = Comentario
-        fields = '__all__'
-
-
 @csrf_exempt
 def comentarioExistente(request,id_v, id_r):
+    tokenStatus = getTokenStatus(request)
+    if(not tokenStatus):
+        return HttpResponse('Invalid Token')
+
     if request.method == 'POST':
         data = jsonUser = json.loads(request.body)
         version = get_object_or_404(Version, id=id_v)
@@ -291,13 +247,26 @@ def comentarioExistente(request,id_v, id_r):
 
 @csrf_exempt
 def comentarioNuevo(request,id_v, id_r):
+<<<<<<< HEAD
+    tokenStatus = getTokenStatus(request)
+    if(not tokenStatus):
+        return HttpResponse('Invalid Token')
+
+    #traer el perfil del usuario que esta logueado
+    token = request.META['HTTP_AUTHORIZATION']
+    token = token.replace('Token ', '')
+    userId = Token.objects.get(key=token).user.id
+=======
+    NotificacionComentario = 2
+>>>>>>> ReleaseSprint3
+
     if request.method == 'POST':
         data = jsonUser = json.loads(request.body)
         version = get_object_or_404(Version, id=id_v)
         recurso = get_object_or_404(Recurso, id=id_r)
         contenido = data['contenido']
         fecha_creacion = datetime.date.today()
-        usuario=Perfil.objects.get(usuario__id=data['usuario'])
+        usuario=Perfil.objects.get(usuario__id=userId)
         x1=data['x1']
         x2=data['x2']
         y1=data['y1']
@@ -318,11 +287,20 @@ def comentarioNuevo(request,id_v, id_r):
 
         serializer=ComentarioSerializer(comentario, many=False)
 
+        result = createNotification(id_r, NotificacionComentario)  # para crear la notificacion
+        print("notificacion:", result)
+
+        if result != {"mensaje": 'La notificacion ha sido creada'}:
+            return JsonResponse({"error":'No fue posible crear la notificacion'}, safe=True)
+
         return JsonResponse(serializer.data, safe=True)
     return HttpResponseNotFound()
 
 @csrf_exempt
 def getListaComentarios(request,id_v, id_r):
+    tokenStatus = getTokenStatus(request)
+    if(not tokenStatus):
+        return HttpResponse('Invalid Token')
 
     version = get_object_or_404(Version, id=id_v)
     recurso = get_object_or_404(Recurso, id=id_r)
@@ -331,8 +309,6 @@ def getListaComentarios(request,id_v, id_r):
     serializer=ComentarioSerializer(data, many=True)
     return JsonResponse({'context': serializer.data}, safe=True)
 
-<<<<<<< HEAD
-=======
 @csrf_exempt
 def verAvanceProyectoConectate(request,idProyecto):
     tokenStatus = getTokenStatus(request)
@@ -400,7 +376,8 @@ def verAvanceProyectoConectate(request,idProyecto):
             'normalReds': list(normalReds),
             'cerradosReds':list(cerradosReds),
         }, safe=True)
-
+        
+#trae todos los asignados de un red
 def getAllAsignados(request,redId):
     tokenStatus = getTokenStatus(request)
     if(not tokenStatus):
@@ -414,9 +391,6 @@ def getAllAsignados(request,redId):
 
     return JsonResponse(list(personasAsignadas), safe=False)
 
-
-
->>>>>>> Equipo2Sprint3Develop
 def getTokenStatus(request):
     token = request.META['HTTP_AUTHORIZATION']
     token = token.replace('Token ', '')
@@ -425,11 +399,9 @@ def getTokenStatus(request):
     except Token.DoesNotExist:
         tokenStatus = False
     
-<<<<<<< HEAD
-    return tokenStatus
-=======
     return tokenStatus
 
+#verifica si el red esta activo
 def esActivo(red):
     if not red.fecha_creacion:
         return False
@@ -447,12 +419,6 @@ def esActivo(red):
             return True
     
     return False
-    
-class ProyectoREDSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProyectoRED
-        fields= '__all__'
-
 
 #Obtiene la lista de Proyectos RED asociados al RED
 @csrf_exempt
@@ -478,4 +444,26 @@ def getListaProyectosred(request, id):
     serializer = ProyectoREDSerializer(data, many=True)
     return JsonResponse({'context': serializer.data}, safe=True)
 
->>>>>>> Equipo2Sprint3Develop
+def getTokenStatus(request):
+    token = request.META['HTTP_AUTHORIZATION']
+    token = token.replace('Token ', '')
+    try:
+        tokenStatus = Token.objects.get(key=token).user.is_active
+    except Token.DoesNotExist:
+        tokenStatus = False
+    
+    return tokenStatus
+
+
+#Luego de subir RED se genera una notificación al proyecto
+def generarNotificacionSubirRed(request, id_conectate):
+    NotificacionSubirRed = 3
+    result = createNotification(str(id_conectate), NotificacionSubirRed)
+    print("notificacion", result)
+
+    if result != {"mensaje": 'La notificacion ha sido creada'}:
+        error = 'No fue posible crear la notificacion'
+        return HttpResponseBadRequest(content=error, status=status.HTTP_400_BAD_REQUEST)
+
+    return HttpResponse(json.dumps(result))
+

@@ -13,16 +13,20 @@ from rest_framework.status import (HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTT
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.db.models import Q
-
+from django.core import serializers
 from sisred_app.views.views_equipo1 import sincronizarFases
+
 
 """
 Vista para ver los detalles de un RED en donde se incluyen los recursos (GET)
 Se usan archivos serializer para import de los modelos con los campos filtrados
 """
 
+"""constants to getAllUser"""
+userEliminated = 0;
+userValid = 1;
 
 def getRecurso(request, id):
     data = Recurso.objects.filter(id=id)
@@ -159,9 +163,9 @@ def getAllUser(request):
         for user in users:
             perfil = Perfil.objects.get(usuario=user)
             estado = ""
-            if (perfil.estado == 0):
+            if (perfil.estado == userEliminated):
                 estado = "Eliminado"
-            elif perfil.estado == 1:
+            elif perfil.estado == userValid:
                 estado = "Vigente"
             else:
                 estado = "Inactivo"
@@ -253,14 +257,31 @@ def get_reds_relacionados(request, id):
             content='No existe el proyecto conectate con id ' + str(id)
         )
 
+"""
+Metodo para desmenuzar el servicio que actualiza o edita registros del modelo RED (PUT)
+Parametros: aRedData (estructura de datos a actualizar), 
+            aDatareceived (datos recibidos desde el servicio para actualizar)
+Return: 200 exitoso, 400 fallido explicando en un string el motivo del fallo.
+"""
+def getDataUpdateRed(aRedData,aDatareceived):
+    aRedData.nombre = aDatareceived['nombre']
+    aRedData.nombre_corto = aDatareceived['nombre_corto']
+    aRedData.descripcion = aDatareceived['descripcion']
+    aRedData.fecha_inicio = aDatareceived['fecha_inicio']
+    aRedData.fecha_cierre = aDatareceived['fecha_cierre']
+    #   fecha_creacion = json_data['fecha_creacion'],
+    aRedData.porcentaje_avance = aDatareceived['porcentaje_avance']
+    aRedData.tipo = aDatareceived['tipo']
+    aRedData.solicitante = aDatareceived['solicitante']
+    aRedData.horas_estimadas = aDatareceived['horas_estimadas']
+    aRedData.horas_trabajadas = aDatareceived['horas_trabajadas']
+    return
 
 """
 Servicio para actualizar o editar un registros del modelo RED (PUT)
 Parametros: request (en el body se agregan los atributos del modelo de RED en formato json)
 Return: 200 exitoso, 400 fallido explicando en un string el motivo del fallo.
 """
-
-
 @csrf_exempt
 @api_view(["PUT"])
 @permission_classes((AllowAny,))
@@ -270,78 +291,31 @@ def update_sisred(request):
     if request.method == 'PUT':
         arrayMessages = []
         count = 0
-        # Obtengo la lista de REDs del JSON
-        json_data = json.loads(request.body)
 
-        # Recorro el listado de REDS con la etiqueta RED
-        for data in json_data["RED"]:
+        json_data = json.loads(request.body) # Obtengo la lista de REDs del JSON
+
+        for data in json_data["RED"]:# Recorro el listado de REDS con la etiqueta RED
             count += 1
             id_conectate = data['id_conectate']
             print('id_conectate', id_conectate)
 
             try:
-                # updateRed = RED.objects.get(id=1)  # debe ir el ID que se creo en el nuevo modelo
                 print('updateRed')
                 updateRed = RED.objects.filter(id_conectate=id_conectate).first()
 
-                print("updateRed", updateRed.nombre)
-
-                # json_data = json.loads(request.body)
-
-                # updateRed.codigo=json_data['codigo']
-                updateRed.nombre = data['nombre']
-                updateRed.nombre_corto = data['nombre_corto']
-                updateRed.descripcion = data['descripcion']
-                updateRed.fecha_inicio = data['fecha_inicio']
-                updateRed.fecha_cierre = data['fecha_cierre']
-                #   fecha_creacion = json_data['fecha_creacion'],
-                updateRed.porcentaje_avance = data['porcentaje_avance']
-                updateRed.tipo = data['tipo']
-                updateRed.solicitante = data['solicitante']
-                # updateRed.proyecto_conectate=ProyectoConectate.objects.get(id=json_data['solicitante']),
-                # recursos=res,
-                # metadata=met,
-                updateRed.horas_estimadas = data['horas_estimadas']
-                updateRed.horas_trabajadas = data['horas_trabajadas']
-
-                print("updateRed", updateRed.nombre)
-
-                json_pyConectate = data['proyecto_conectate']
-                namep = json_pyConectate['nombre']
-                nameShort = json_pyConectate['nombre_corto']
-                code = json_pyConectate['codigo']
-                initDate = json_pyConectate['fecha_inicio']
-                endDate = json_pyConectate['fecha_fin']
-                id_conectatePC = json_pyConectate['id_conectate']
-                print("endDate", endDate)
+                getDataUpdateRed(updateRed,data);#para ubicar los datos del servicio en el RED
+                json_pyConectate = data['proyecto_conectate']#para obtener los datos del proyecto conectate
 
                 try:
                     proyecto_conectate = ProyectoConectate.objects.get(id=updateRed.proyecto_conectate.id)
                 except ProyectoConectate.DoesNotExist:
-                    proyectoConectate = None
-                    proyecto_conectate = ProyectoConectate.objects.create(id_conectate=id_conectatePC, nombre=namep,
-                                                                          nombre_corto=nameShort, codigo=code,
-                                                                          fecha_inicio=initDate, fecha_fin=endDate),
-
+                    proyecto_conectate = ProyectoConectate.objects.create(id_conectate=json_pyConectate['id_conectate'], nombre=json_pyConectate['nombre'],
+                                                                          nombre_corto=json_pyConectate['nombre_corto'], codigo=json_pyConectate['codigo'],
+                                                                          fecha_inicio=json_pyConectate['fecha_inicio'], fecha_fin=json_pyConectate['fecha_fin']),
                 updateRed.proyecto_conectate = proyecto_conectate
-                # for Metadata in request..all():
-                # met = Metadata.objects.create(tag='metadataTest2')
-                # updateRed.metadata.add(met)
-                # print("metadata")
-                # updateRed.metadata.all()
-                # print("met", newRED.metadata.all())
 
                 try:
                     updateRed.save()
-                    # json_metadata = json_data['metadata']
-                    # tags = json_metadata['tag']
-                    # print("Metadata.objects")
-                    # met = Metadata.objects.get(id=updateRed.metadata.)
-                    # met = updateRed.metadata.all()
-                    # print("tags", len(tags))
-                    # for tagData in tags :
-                    # updateRed.metadata.add();
-                    # updateRed.save()
                 except IntegrityError as ie:
                     return HttpResponse("Integrity Error", status=400)
                 except DatabaseError as e:
@@ -351,17 +325,17 @@ def update_sisred(request):
                     return HttpResponse("Error value saving", status=400)
                     # headers = {'Authorization': 'Bearer ' + token, "Content-Type": "application/json"}
                 print("updateRed ok")
-
-
             except AttributeError:
-                arrayMessages.insert(count, ' RED: Proyecto RED ' + updateRed.id_conectate + ' no existe ')
+                arrayMessages.insert(count, ' RED: Proyecto RED ' + id_conectate + ' no existe ')
                 return HttpResponse(arrayMessages, status=400)
+            except updateRed.DoesNotExist:
+                arrayMessages.insert(count, ' RED: Proyecto RED ' + id_conectate + ' no existe ')
+                return HttpResponse(arrayMessages, status=400)
+
 
         return HttpResponse("Updated successful", status=200)
     else:
         return HttpResponse("Bad request", status=400)
-
-
 """
 Vista para eliminar el usuario por id (DELETE)
 Parametros: request, id
@@ -527,6 +501,8 @@ Return: Un mensaje de confirmación
 
 @csrf_exempt
 def postRolAsignado(request):
+    NotificacionRolAsignado = 1
+
     if request.method == 'POST':
         error = ''
         try:
@@ -550,7 +526,7 @@ def postRolAsignado(request):
                             rol_asignado = RolAsignado.objects.create(id_conectate=id_conectate, estado=1, red=red,
                                                                       rol=rol, usuario=perfil)
 
-                            result = createNotification(id_red, 1)  # para crear la notificacion
+                            result = createNotification(id_red, NotificacionRolAsignado)  # para crear la notificacion
                             print("notificacion",result)
 
                             if result != {"mensaje": 'La notificacion ha sido creada'}:
@@ -686,6 +662,8 @@ Parametros: request, id del red, id de la fase'''
 
 @csrf_exempt
 def putCambiarFaseRed(request, idRed, idFase):
+    NotificacionCambiarFase = 2#para la creacion de la notificacion
+
     if request.method == 'PUT':
         try:
             red = RED.objects.get(id_conectate=idRed)
@@ -693,25 +671,33 @@ def putCambiarFaseRed(request, idRed, idFase):
 
             idActual = int(red.fase.id_conectate)
 
-            print("putCambiarFaseRed", idActual, idFase)
-            if (idFase > (idActual + 1)) | (idFase < (idActual - 1)):
-                error = 'Debe seleccionar una fase consecutiva para poder hacer el cambio'
+            json_data = json.loads(request.body)
+            comentario = json_data['comentario']
+
+            print("putCambiarFaseRed", idActual, idFase,comentario)
+
+            if comentario==None:
+                error = 'La actualizacion viene sin comentario'
                 return HttpResponseBadRequest(content=error, status=HTTP_400_BAD_REQUEST)
+
+            if idFase < idActual:
+                if (idFase!= 2) | (idActual!=3): # se valida para que permita retroceder solo a la fase de post-produccion
+                    error = 'Debe seleccionar una fase superior para poder hacer el cambio'
+                    return HttpResponseBadRequest(content=error, status=HTTP_400_BAD_REQUEST)
 
             red.fase = fase
             red.save()
 
-            # Llamado a la funcion de sincronizarFases
-            sincronizarFases(idRed, idActual, idFase)
+            sincronizarFases(idRed, idActual, idFase) # Llamado a la funcion de sincronizarFases
 
-            result = createNotification(idRed, 2)  # para crear la notificacion
+            result = createNotification(idRed, NotificacionCambiarFase)  # para crear la notificacion
             print("notificacion:", result)
 
             if result != {"mensaje": 'La notificacion ha sido creada'}:
                 error = 'No fue posible crear la notificacion'
                 return HttpResponseBadRequest(content=error, status=HTTP_400_BAD_REQUEST)
 
-            historialFase = HistorialFases.objects.create(fecha_cambio=datetime.now(), fase=fase, red=red)
+            historialFase = HistorialFases.objects.create(fecha_cambio=datetime.now(), fase=fase, red=red, comentario=comentario)
             historialFase.save()
 
             return HttpResponse(status=HTTP_200_OK)
@@ -761,12 +747,30 @@ def login(request):
     user = authenticate(username=username, password=password)
     if user == None:
         return Response({'error': 'Credenciales inválidas'}, status=HTTP_400_BAD_REQUEST)
+    try:
+        st1 = Perfil.objects.get(usuario=user).estado_sisred
+        st2 = Perfil.objects.get(usuario=user).estado
+    except Perfil.DoesNotExist:
+        return Response({'error': 'Usuario sin perfiles, por favor contacte a su administrador'}, status=HTTP_400_BAD_REQUEST)
+    if st1 is 2 or st2 is 2:
+        return Response({'error': 'Usuario inactivo'}, status=HTTP_400_BAD_REQUEST)
     token, _ = Token.objects.get_or_create(user=user)
-    perfil = Perfil.objects.filter(usuario=user).first()
-    return Response({'token': token.key, 'username': user.username, 'idConectate': perfil.id_conectate,
+    try:
+        perfil = Perfil.objects.filter(usuario=user).first()
+        perfil_user = perfil.id_conectate
+    except Perfil.DoesNotExist:
+        perfil_user = 'No perfil'
+    try:
+        rol = RolAsignado.objects.filter(usuario__usuario__username=username).filter(rol__nombre='Coordinador').first()
+        if rol == None:
+            rol_user = 'Usuario estándar'
+        else:
+            rol_user = rol.rol.nombre
+    except ObjectDoesNotExist:
+        rol_user = 'No rol'
+    return Response({'token': token.key, 'username': user.username, 'idConectate': perfil_user,
                      'firstName': user.first_name, 'lastName': user.last_name,
-                     'numeroIdentificacion': perfil.numero_identificacion}, status=HTTP_200_OK)
-
+                     'numeroIdentificacion': perfil.numero_identificacion, 'privilegio': rol_user}, status=HTTP_200_OK)
 
 """
 Vista para obtener la validez de un token de usuario
@@ -813,7 +817,6 @@ def getRolAsignadoRED(request, id):
     if TokenStatus == True:
         reqUser = Token.objects.get(key=token).user.id
         rol = RolAsignado.objects.filter(red=id).filter(usuario_id=reqUser)
-        print(rol)
         if not rol:
             return Response({'error': 'No autorizado'}, status=HTTP_400_BAD_REQUEST)
         if request.method == 'GET':
@@ -896,28 +899,53 @@ Return: 200 correcto 400 incorrecto
 @api_view(["GET"])
 @permission_classes((AllowAny,))
 def buscar_recurso(request):
-    if request.method=='GET':
-        name=request.GET.get("name")
+    if request.method == 'GET':
+        text = request.GET.get("texto")
+        name = request.GET.get("name")
         fechaDesde=request.GET.get ("fdesde")
         fechaHasta = request.GET.get("fhasta")
-        tag = request.GET.get("text")
+        tag = request.GET.get("tag")
+        ##valida si entra a algun filtro sino devolver el arreglo en vacio (0 no entro , 1 entro)
+        validaFiltro=0
 
-        q=Recurso.objects.filter()
+        q = Recurso.objects.filter()
+        if text:
+            print('entro')
+            words = text.lower().split(' ')
+            recursos=[]
+            for word in words:
+                recursos += q.filter(Q(nombre__contains=word) | Q(descripcion__contains=word) | Q(metadata__tag__contains=word))
+
+            print(recursos)
+            serializer = RecursoSerializer(recursos, many=True)
+            return JsonResponse({'context': serializer.data}, safe=True)
 
         if name:
-            q = q.filter(Q(nombre__icontains=name))
+            validaFiltro=1
+            name = name.lower()
+            q = q.filter(Q(nombre__contains=name))
 
         if fechaDesde and not fechaHasta:
-            q=q.filter(Q(fecha_creacion__exact=fechaDesde))
+            validaFiltro = 1
+            q = q.filter(Q(fecha_creacion__exact=fechaDesde))
 
         if fechaDesde and fechaHasta:
+            validaFiltro = 1
             q = q.filter(Q(fecha_creacion__gte=fechaDesde),Q(fecha_creacion__lte=fechaHasta))
 
         if tag:
-            metadata=Metadata.objects.filter(tag=tag).first()
-            q = q.filter(Q(metadata__exact=metadata))
+            validaFiltro = 1
+            tag = tag.lower()
+            q = q.filter(Q(metadata__tag__contains=tag))
 
-        return JsonResponse(list(q.values()), safe=False)
+        if validaFiltro == 0:
+            recursos = []
+            serializer = RecursoSerializer(recursos, many=True)
+            return JsonResponse({'context': serializer.data}, safe=True)
+        else:
+            serializer = RecursoSerializer(q, many=True)
+            return JsonResponse({'context': serializer.data}, safe=True)
+
 
     return HttpResponseNotFound()
 
@@ -987,9 +1015,7 @@ def putNotification(request, id_notification):
             return HttpResponseBadRequest(json.dumps(error))
 
 def createNotification(id_red, id_notificationtype):
-
     print("createNotification")
-    error = ''
 
     try:
         print("notificationType:", id_notificationtype,id_red)
@@ -998,6 +1024,7 @@ def createNotification(id_red, id_notificationtype):
         if red != None:
             print("red", red.nombre, id_notificationtype, id_red)
             rol_asignado = RolAsignado.objects.filter(red=red)
+            print("rolAsignado", rol_asignado.count())
 
             if rol_asignado:
 
@@ -1012,18 +1039,58 @@ def createNotification(id_red, id_notificationtype):
                         print("notificacion", rolAsignado.notificaciones.all())
                         rolAsignado.save()
                     else:
-                        error = {"error": 'No hay un tipo de notificacion asociado a la tabla con el ID' + str(id_notificationtype)}
-                        return error
+                        return {"error": 'No hay un tipo de notificacion asociado a la tabla con el ID' + str(id_notificationtype)}
 
-                mensaje = {"mensaje": 'La notificacion ha sido creada'}
-                return mensaje
+                return {"mensaje": 'La notificacion ha sido creada'}
             else:
-                error = {"error": 'No hay un ROL asignado al RED' + id_red}
-                return error
+                return {"error": 'No hay un ROL asignado al RED' + str(id_red)}
         else:
-            error = {"error": 'No hay un RED con el id ' + id_red}
-            return error
+            return {"error": 'No hay un RED con el id ' + str(id_red)}
 
     except Exception as ex:
         error = {"errorInfo": 'Error: ' + str(ex), "error": "Se presentó un error realizando la petición"}
         return error
+
+
+
+def getMetrics(request):
+    logs = RED.objects.all()
+    print(logs)
+    data = ProyectoConectate.objects.all()
+    if request.method == 'GET':
+        serializer = ProyectosSerializer(data, many=True)
+    return JsonResponse(serializer.data, safe=False)
+
+@api_view(["GET"])
+def getHistoricoAsignadosRed(request, id):
+
+    usuarios=[]
+    if request.method == "GET":
+        fase=Fase.objects.get(nombre_fase='Cerrado')
+        red = RED.objects.filter(id=id,fase=fase).first()
+
+        if red != None:
+            print(red.nombre)
+            roles = RolAsignado.objects.filter(red=red)
+            for rol in roles:
+                perfilUsuario = User.objects.get(id=rol.usuario.id)
+                #busco el perfil
+                perfil=Perfil.objects.filter(usuario=perfilUsuario).first()
+                usuario = perfil.usuario
+                print(usuario.first_name + ' ' + usuario.last_name)
+                usuarios.append(usuario.first_name + ' ' + usuario.last_name)
+
+        return JsonResponse(usuarios, status=200,safe=False)
+
+    else:
+        return HttpResponse("Bad request", status=400)
+
+
+
+def getRecurso(request, id):
+    data = Recurso.objects.filter(id=id)
+    if request.method == 'GET':
+        serializer = ResourceSerializer(data, many=True)
+    return JsonResponse(serializer.data, safe=False)
+
+

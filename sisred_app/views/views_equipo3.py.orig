@@ -12,8 +12,16 @@ from sisred_app.models import RED, ProyectoRED, RolAsignado, Perfil, Metadata, R
 from django.http import HttpResponse
 from django.core import serializers
 from django.contrib.auth.models import User
+<<<<<<< HEAD
+
+from datetime import datetime, timedelta
+
+from django.utils.formats import get_format
+from django.utils.dateparse import parse_date
+=======
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
+>>>>>>> ReleaseSprint3
 
 # Create your views here.
 

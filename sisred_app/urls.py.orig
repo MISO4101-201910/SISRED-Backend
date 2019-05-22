@@ -10,6 +10,12 @@ urlpatterns = [
     path('fase_byid/<int:id>', views_equipo1.fase_byid, name='fase_byid'),
     path('habilitar-usuario/<str:numero_identificacion>', views_equipo1.getUserByIdentification, name='habilitar-usuario'),
     path('habilitar-red/<str:id_conectate>', views_equipo1.getREDByIdentification, name='habilitar-red'),
+    path('comentario-cierre/', views_equipo1.comentario_cierre_post, name='comentario-cierre'),
+    path('comentario-cierre/base/<int:pk>', views_equipo1.comentario_cierre_put, name='comentario-cierre-put'),
+    path('comentario-base/<int:pk>', views_equipo1.comentario_base_get, name='comentario-base'),
+    path('comentario-pdf/<int:pk>/', views_equipo1.comentario_pdf_get, name='comentario_pdf_get'),
+    path('comentario-pdf/', views_equipo1.comentario_pdf_post, name='comentario-pdf-post'),
+    path('getAvanceRED/<int:idRED>', views_equipo1.getAvanceRED, name='get_avance_red'),
 
     path('post_proyecto_red/', views_equipo3.post_proyecto_red, name='agregar_proyecto_red'),
     path('detallered/', views_equipo3.get_detallered, name='detallered'),
@@ -17,14 +23,21 @@ urlpatterns = [
     path('detallered/personas/', views_equipo3.get_detallered_personas, name='detallered'),
     path('detallered/recursos/', views_equipo3.get_detallered_recursos, name='detallered'),
     path('detallered/proyectos/', views_equipo3.get_detallered_proyectosred, name='detallered'),
-    path('reds/asignados/<int:id>', views_equipo3.get_reds_asignados, name='reds_asignados'),
+    path('reds/asignados/<str:id>', views_equipo3.get_reds_asignados, name='reds_asignados'),
     path('get_version/', views_equipo3.get_version, name='version_red'),
     path('get_recursos_by_version/', views_equipo3.get_recursos_by_version, name='version_red'),
     path('comentarios/video/<int:id>', views_equipo3.get_comentarios_video, name='comentarios'),
     path('comentarios/video/<int:idVersion>/<int:idRecurso>', views_equipo3.post_comentarios_video, name='agregarComentarios'),
     path('comentarios/video/url/<int:id>', views_equipo3.get_url_recurso_video, name='urlRecursoVideo'),
     path('revisiones/<int:id>', views_equipo3.get_versiones_revision, name='revisiones'),
+<<<<<<< HEAD
+ 
+=======
+    path('post_comment/', views_equipo3.post_comment, name='agregar_comentario'),
+    path('get_comentarios/<int:idRecurso>', views_equipo3.get_comentarios, name='treer_comentarios'),
+    path('comentarios/video/cierre', views_equipo3.post_cerrar_comentario_video, name='cerrarComentarioVideo'),
 
+>>>>>>> ReleaseSprint3
     path('getProyectosRED/', views_equipo2.getProyectosRED),
     path('getRecurso/', views_equipo2.getRecurso),
     path('getRED/', views_equipo2.getRED),
@@ -34,7 +47,12 @@ urlpatterns = [
     path('versiones/<int:id>/recursos/', views_equipo2.getVerVersionR),
     path('reds/<int:id>/versiones/', views_equipo2.getVersionesRED),
     path('versiones/<int:id>/marcar', views_equipo2.marcarVersion, name='marcarVersion'),
+<<<<<<< HEAD
+    path('buscarReds/', views_equipo2.buscarRed, name='reds'),
+=======
+    path('version-lista/<int:id>/marcar', views_equipo1.marcarVersionLista, name='marcarVersion'),
     path('buscarReds/<int:idUsuario>/', views_equipo2.buscarRed, name='reds'),
+>>>>>>> ReleaseSprint3
     path('versiones/', views_equipo2.versiones, name='versiones'),
     path('versiones/<int:id_v>/recursos/<int:id_r>/comentarios/', views_equipo2.comentarioExistente, name='comentarioExistente'),
     path('versiones/<int:id_v>/recursos/<int:id_r>/comentariosnuevos/', views_equipo2.comentarioNuevo, name='comentarioNuevo'),
@@ -42,6 +60,7 @@ urlpatterns = [
     path('proyectoConectate/<int:idProyecto>/verAvance', views_equipo2.verAvanceProyectoConectate, name='verAvanceProyectoConectate'),
     path('reds/<int:id>/proyectored/', views_equipo2.getListaProyectosred, name='getListaProyectosred'),
     path('red/<int:redId>/historicoAsignados', views_equipo2.getAllAsignados, name='getAllAsignados'),
+    path('<int:id_conectate>/subirnotif', views_equipo2.generarNotificacionSubirRed, name='generarNotificacionSubirRed'),
 
     path('users/', views_equipo4.getAllUser, name='allUsers'),
     path('users/<int:id>/', views_equipo4.getUser, name='getUserId'),
@@ -56,6 +75,7 @@ urlpatterns = [
     path('getRedDetailRecursos/<int:id>/', views_equipo4.getRedDetailRecursos, name='getRedDetailRecursos'),
     path('getUserAut/', views_equipo4.getUserAut, name='getUserAut'),
     path('getRolAsignadoRED/<int:id>/', views_equipo4.getRolAsignadoRED, name='getRolAsignadoRED'),
+    path('getRolAsignadoREDPorRecurso/<int:idRecurso>/<int:idUsuario>', views_equipo3.getRolAsignadoREDPorRecurso, name='getRolAsignadoREDPorRecurso'),
     path('update_sisred/', views_equipo4.update_sisred, name='update_sisred'),
     path('reds/', views_equipo4.get_red, name='reds'),
     path('sisred_create/', views_equipo4.sisred_create, name='sisred_create'),
@@ -64,11 +84,13 @@ urlpatterns = [
     path('asignaciones/update/<int:id>/', views_equipo4.putRolAsignado, name='putRolAsignado'),
     path('asignaciones/delete/<int:id>/', views_equipo4.deleteRolAsignado, name='deleteRolAsignado'),
     path('red/<int:idRed>/cambiarfase/<int:idFase>/', views_equipo4.putCambiarFaseRed, name='putCambiarFaseRed'),
+    path('getMetrics/', views_equipo4.getMetrics, name='getMetrics'),
 
     path('fases/', views_equipo4.get_fases, name='fases'),
     path('addMetadataRecurso/<int:id>/', views_equipo4.add_metadata_recurso, name='addMetadataRecurso'),
     path('buscarRecurso/', views_equipo4.buscar_recurso, name='recursos'),
     path('notificaciones/<int:idUsuario>/', views_equipo4.getNotificacionesPorUsuario, name='getNotificacionesPorUsuario'),
     path('notificaciones/<int:idUsuario>/novistos/', views_equipo4.getNotificacionesNoVistosPorUsuario, name='getNotificacionesNoVistosPorUsuario'),
-    path('putNotification/<int:id_notification>/', views_equipo4.putNotification, name='putNotification')
+    path('putNotification/<int:id_notification>/', views_equipo4.putNotification, name='putNotification'),
+    path('getHistoricoAsignadosRed/<int:id>/', views_equipo4.getHistoricoAsignadosRed, name='getHistoricoAsignadosRed')
 ]

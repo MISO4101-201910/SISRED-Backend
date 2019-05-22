@@ -18,6 +18,9 @@ from rest_framework import status
 from sisred_app.serializer import *
 
 
+from sisred_app.views.views_equipo4 import createNotification
+
+
 @csrf_exempt
 def getProyectosRED(request):
     vLstObjects = list(ProyectoRED.objects.all())
@@ -35,6 +38,8 @@ def getRED(request):
 
 @csrf_exempt
 def marcarVersion(request,id):
+    NotificacionVersionFinal = 5
+
     if request.method == 'POST':
         tokenStatus = getTokenStatus(request)
         if(not tokenStatus):
@@ -48,6 +53,13 @@ def marcarVersion(request,id):
 
         version.es_final = True
         version.save()
+
+        result = createNotification(version.red_id, NotificacionVersionFinal)  # para crear la notificacion
+        print("notificacion:", result)
+
+        if result != {"mensaje": 'La notificacion ha sido creada'}:
+            return JsonResponse('No fue posible crear la notificacion', safe=False)
+
         return JsonResponse(str(id), safe=False)    
     return HttpResponseNotFound()     
     
@@ -111,6 +123,11 @@ def versiones(request):
     if(not tokenStatus):
         return HttpResponseForbidden('Invalid Token')
 
+    #traer el perfil del usuario que esta logueado
+    token = request.META['HTTP_AUTHORIZATION']
+    token = token.replace('Token ', '')
+    userId = Token.objects.get(key=token).user.id
+
     if request.method == 'POST':
         data = jsonUser = json.loads(request.body)
         es_final = False
@@ -118,7 +135,7 @@ def versiones(request):
         imagen = data['imagen']
         archivos = data['archivos']
         redId = data['redId']
-        fecha_creacion = datetime.date.today()
+        fecha_creacion = datetime.today().date()
         idRecursos = data['recursos']
 
         red = get_object_or_404(RED, id=redId)
@@ -129,7 +146,7 @@ def versiones(request):
             numero = max((v.numero for v in oldVersions)) + 1
 
         recursos = Recurso.objects.filter(id__in=idRecursos)
-        creado_por=Perfil.objects.get(usuario__username=data['creado_por'])
+        creado_por=Perfil.objects.get(usuario__id=userId)
 
         version = createVersion(es_final, imagen, archivos, red, numero, creado_por, fecha_creacion)
 
@@ -211,7 +228,7 @@ def comentarioExistente(request,id_v, id_r):
         version = get_object_or_404(Version, id=id_v)
         recurso = get_object_or_404(Recurso, id=id_r)
         contenido = data['contenido']
-        fecha_creacion = datetime.date.today()
+        fecha_creacion = datetime.today()
         usuario=Perfil.objects.get(usuario__id=data['usuario'])
         idTabla = data['idTabla']
 
@@ -235,6 +252,8 @@ def comentarioExistente(request,id_v, id_r):
 
 @csrf_exempt
 def comentarioNuevo(request,id_v, id_r):
+    NotificacionComentario = 2
+
     tokenStatus = getTokenStatus(request)
     if(not tokenStatus):
         return HttpResponse('Invalid Token')
@@ -270,6 +289,12 @@ def comentarioNuevo(request,id_v, id_r):
         comentario.save()
 
         serializer=ComentarioSerializer(comentario, many=False)
+
+        result = createNotification(id_r, NotificacionComentario)  # para crear la notificacion
+        print("notificacion:", result)
+
+        if result != {"mensaje": 'La notificacion ha sido creada'}:
+            return JsonResponse({"error":'No fue posible crear la notificacion'}, safe=True)
 
         return JsonResponse(serializer.data, safe=True)
     return HttpResponseNotFound()
@@ -384,7 +409,7 @@ def esActivo(red):
     if not red.fecha_creacion:
         return False
 
-    redCreacionDelta = datetime.datetime.now().date() - red.fecha_creacion
+    redCreacionDelta = datetime.now().date() - red.fecha_creacion
 
     if(redCreacionDelta.days > 7):
         return True
@@ -392,7 +417,7 @@ def esActivo(red):
     comentarios = Comentario.objects.filter(version__red__id=red.id)
 
     for c in comentarios:
-        comentarioCreacionDelta = datetime.datetime.now().date() - c.fecha_creacion.date()
+        comentarioCreacionDelta = datetime.now().date() - c.fecha_creacion.date()
         if(comentarioCreacionDelta.days < 7):
             return True
     
