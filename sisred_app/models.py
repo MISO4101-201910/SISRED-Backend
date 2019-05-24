@@ -153,7 +153,7 @@ class HistorialFases(models.Model):
 
 class Version(models.Model):
     es_final = models.BooleanField(default=False)
-    es_lista = models.BooleanField(default=False)
+    es_lista = models.BooleanField(default=False, null=True)
     numero = models.IntegerField()
     imagen = models.CharField(max_length=200, null=True)
     archivos = models.CharField(max_length=200)
