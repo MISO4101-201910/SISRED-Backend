@@ -914,7 +914,7 @@ def buscar_recurso(request):
             words = text.lower().split(' ')
             recursos=[]
             for word in words:
-                recursos += q.filter(Q(nombre__contains=word) | Q(descripcion__contains=word) | Q(metadata__tag__contains=word))
+                recursos += q.filter(Q(nombre__icontains=word) | Q(descripcion__icontains=word) | Q(metadata__tag__icontains=word))
 
             print(recursos)
             serializer = RecursoSerializer(recursos, many=True)
@@ -923,7 +923,7 @@ def buscar_recurso(request):
         if name:
             validaFiltro=1
             name = name.lower()
-            q = q.filter(Q(nombre__contains=name))
+            q = q.filter(Q(nombre__icontains=name))
 
         if fechaDesde and not fechaHasta:
             validaFiltro = 1
@@ -936,7 +936,7 @@ def buscar_recurso(request):
         if tag:
             validaFiltro = 1
             tag = tag.lower()
-            q = q.filter(Q(metadata__tag__contains=tag))
+            q = q.filter(Q(metadata__tag__icontains=tag))
 
         if validaFiltro == 0:
             recursos = []
