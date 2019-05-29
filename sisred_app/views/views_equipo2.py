@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from sisred_app.models import ProyectoRED, Recurso, RED, RolAsignado, Perfil, Rol, ProyectoConectate, Version, Comentario, ComentarioMultimedia, HistorialFases
 from django.contrib.auth.models import User
 from sisred_app.serializer import RecursoSerializer
-import datetime
+from datetime import datetime
 import json
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
