@@ -268,7 +268,7 @@ def comentarioNuevo(request,id_v, id_r):
         version = get_object_or_404(Version, id=id_v)
         recurso = get_object_or_404(Recurso, id=id_r)
         contenido = data['contenido']
-        fecha_creacion = datetime.date.today()
+        fecha_creacion = datetime.today()
         usuario=Perfil.objects.get(usuario__id=userId)
         x1=data['x1']
         x2=data['x2']
